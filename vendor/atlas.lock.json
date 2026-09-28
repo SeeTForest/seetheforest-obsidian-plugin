@@ -1,0 +1,8 @@
+{
+  "package": "@seetheforest/atlas",
+  "version": "0.1.6",
+  "sha256": "10be507aebcdd845d3bd753e63c2ba74c65f6e560ae09a94b6317fc61961c0d3",
+  "publicKeySha256": "b952f1fac176678ff2f29ba038a9e543c715b2139097726f6c82e23e1a3a7a0a",
+  "requiredHostApiVersion": 1,
+  "status": "baseline-only-awaiting-host-api-signed-release"
+}

@@ -1,0 +1,9 @@
+{
+  "id": "seetheforest-atlas",
+  "name": "See the Forest Atlas",
+  "version": "0.1.0",
+  "minAppVersion": "1.11.7",
+  "description": "Explore your local notes as an interactive knowledge constellation.",
+  "author": "See the Forest",
+  "isDesktopOnly": true
+}

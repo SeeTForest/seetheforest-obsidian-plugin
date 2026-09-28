@@ -1,0 +1,26 @@
+{
+  "name": "seetheforest-obsidian-plugin",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test tests/*.test.ts",
+    "build": "node scripts/build.mjs",
+    "prepare:atlas": "node scripts/prepare-atlas.mjs",
+    "verify:package": "node scripts/verify-package.mjs",
+    "package": "npm run build && npm run verify:package && node scripts/package.mjs"
+  },
+  "dependencies": {
+    "@seetheforest/atlas": "file:vendor/atlas.tgz",
+    "solid-js": "1.9.14",
+    "pixi.js": "8.19.0"
+  },
+  "devDependencies": {
+    "@types/node": "24.10.0",
+    "esbuild": "0.25.12",
+    "obsidian": "1.12.3",
+    "tsx": "4.23.1",
+    "typescript": "6.0.3"
+  }
+}

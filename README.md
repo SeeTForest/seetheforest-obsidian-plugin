@@ -1,0 +1,71 @@
+# See the Forest Atlas for Obsidian
+
+把当前 Obsidian 笔记库的真实链接网络交给 See the Forest Atlas 显示，在原生工作区中探索并打开笔记。
+不需要见林 Vault 框架、Profile、Codex、网站构建、账号或网络服务。笔记不会被改写或上传。
+
+## 当前状态：开发候选，尚非可安装交付
+
+2026-09-28 已建立源码、数据适配、视图、设置、测试及受保护制品构建门禁。
+已独立验签的 Atlas 0.1.6 是视觉与数据基线，但不含原生宿主接口。上游兼容扩展仍为源码候选，尚无对应 Release；
+当前 `npm run build` 必须明确失败。没有生成可安装 ZIP，也没有完成 Obsidian 实装验收。
+不得将类型检查、单元测试或网页预览称为插件交付成功。
+
+目标是覆盖原生 Graph 的功能并保留 Atlas 体验。当前差距详见
+[原生功能对照](docs/native-graph-parity.md)；这里没有把功能全集缩减成已经完成的 MVP。
+
+## 工程职责
+
+本工程是独立 Obsidian 插件产品，最终向社区插件市场提交本工程构建的版本。
+官网、Blog 与本插件均消费独立闭源 Atlas 的正式 Release，不直接依赖 Atlas 源码。
+插件构建将获许可的 Atlas 运行制品纳入安装包，不携带开发源码、Source Map 或私有实现资料。
+本次仅在上游增加最小必要的兼容接口及可选配置，既有 Blog 的视觉、数学、物理和交互效果
+不得改变；新增配置缺省保持旧行为，旧调用不需要迁移。通过兼容验收再进入发行步骤。
+
+- `src/vault-adapter.ts`：只读 Vault / MetadataCache；采用宿主已解析的链接事实。
+- `src/graph.ts`：稳定身份、真实节点与关系、可逆视图过滤和局部遍历；不解析 Markdown、不包含布局算法。
+- `src/atlas-adapter.ts`、`src/layout.worker.ts`：唯一 Atlas 接入与受保护数据 API 的离线程调用。
+- `src/main.ts`：命令、工作区视图、设置、文件事件和原生笔记打开。
+- `scripts/`：独立验签、白名单构建、内容哈希与制品检查。
+- `tests/`：非私人合成输入；不进入安装包。
+
+完整边界见 [数据与运行架构](docs/architecture.md)，验证事实见 [测试记录](docs/validation.md)。
+
+## 本地开发
+
+Node.js 24，npm lock 固定依赖。先取得已批准的 Atlas 包、分离签名和可信公钥，
+更新 `vendor/atlas.lock.json` 为同一发行事实；不要凭包的版本字符串信任它。
+
+```text
+npm run prepare:atlas -- <archive.tgz> <signature.sig> <public-key.pem>
+npm ci --ignore-scripts
+npm run typecheck
+npm test
+npm run build
+npm run verify:package
+npm run package
+```
+
+首次运行准备脚本只依赖 Node 内建模块及系统 tar，之后才能安装 `file:vendor/atlas.tgz`。
+当前锁为已验签的 0.1.6 基线，标记了缺少宿主 API 的阻塞，不是候选源码已发行的声明。
+验签不读取私钥；签名私钥只由上游获授权的发布流程使用。
+
+## 安装方式（须先有通过门禁的包）
+
+将安装包内 `seetheforest-atlas/` 放入所选 Vault 的 `.obsidian/plugins/`，
+保留 `assets/` 及许可文件。Obsidian 设置 → 社区插件中启用 See the Forest Atlas。
+命令面板包含“打开全局星图”“打开局部星图”“重新读取当前笔记库”。
+候选 manifest 暂限桌面，最低版本 1.11.7；本机安装器版本已核对，实际兼容仍待实装验证。
+运行源码没有 Node/Electron API 依赖；移动端解禁需要完成 Blob Worker、Wasm、触摸及资源生命周期实测。
+
+单击真实笔记节点在原生阅读标签打开；重复点击复用该视图的阅读标签，保留星图以便返回。
+修饰键使用 Obsidian `Keymap.isModEvent`。未解析链接先显示确认，再交给 Obsidian 打开或创建。
+加载和索引过程不会创建笔记。标签节点进入标签过滤。
+
+## 隐私与分发
+
+不含遥测、云上传、远程 CDN、自更新、账号、支付或 AI 整理功能。
+只持久化必要设置和路径→稳定 ID；正文及可重建图不保存到插件数据或发行包。
+Atlas 是闭源专有组件；插件的目标分发渠道是 Obsidian 社区插件市场。
+正式发布前仍需确认插件许可、Atlas 再分发许可及市场审核要求，不能通过公开 Atlas 源码绕过该边界。
+Obsidian 社区目录禁止以混淆隐藏用途，闭源代码个案审查；不能承诺已可上架。
+官方来源与核验日期见 [功能对照](docs/native-graph-parity.md)。

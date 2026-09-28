@@ -1,0 +1,283 @@
+.stf-atlas-host {
+  color-scheme: dark;
+  --space-0: 0;
+  --space-0-5: 4px;
+  --space-1: 8px;
+  --space-1-5: 12px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+  --space-5: 40px;
+  --space-6: 48px;
+  --space-8: 64px;
+  --space-10: 80px;
+  --space-12: 96px;
+  --space-15: 120px;
+  --page-max: 1440px;
+  --page-padding: clamp(24px, 4vw, 64px);
+  --reading-width: 760px;
+  --font-display: Inter, "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  --font-reading: Inter, "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  --font-sans: Inter, "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  --font-mono: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+  --type-interface: 13px;
+  --type-instrument: 11px;
+  --type-metadata: 10px;
+  --type-index: 9px;
+  --motion-instant: 80ms;
+  --motion-fast: 160ms;
+  --motion-normal: 240ms;
+  --motion-panel: 320ms;
+  --motion-path-step: 180ms;
+  --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  /*
+   * Obsidian Nocturne material contract.
+   *
+   * These semantic sources intentionally preserve the accepted round-three
+   * appearance. Later optical tuning changes the source once; the public host,
+   * DOM labels, and the closed Atlas renderer continue to consume the existing
+   * runtime aliases below.
+   */
+  --obsidian-1000: #070a0e;
+  --obsidian-950: #0a0d12;
+  --obsidian-900: #0e1319;
+  --obsidian-850: #11171e;
+  --graph-field-deep: #070a0e;
+  --graph-field-base: #090d12;
+  --graph-field-raised: #0c1117;
+  --material-surface-1: #11171e;
+  --material-surface-2: #161d25;
+  --material-surface-3: #1b242e;
+  --material-surface-hover: #222d38;
+  --material-understory: #657585;
+  --material-steel: #7e93a6;
+  --material-canopy: #a9bdcd;
+  --material-titanium: #b9c5cf;
+  --material-moc-platinum: #c5cbd0;
+  --material-platinum: #e2e7ea;
+  --air-steel: rgba(112, 142, 171, 0.045);
+  --air-silver: rgba(205, 218, 230, 0.01);
+  --hover-cool: #9eb3c2;
+  --focus-neutral: #e2e5e8;
+  --accent-gold: #e0c58c;
+  --accent-gold-strong: #e7d6ae;
+  --accent-gold-soft: rgba(223, 206, 167, 0.115);
+  --atlas-structural-material-mix: 0;
+  --atlas-node-default-alpha: 0.9;
+  --atlas-node-canopy-alpha: 0.96;
+  --atlas-node-neighbor-alpha: 0.88;
+  --atlas-node-focus-alpha: 0.5;
+  --atlas-node-core-ratio: 0.3;
+  --atlas-node-core-alpha: 0.24;
+  --atlas-canopy-core-ratio: 0.4;
+  --atlas-canopy-core-alpha: 0.5;
+  --atlas-canopy-halo-scale: 1.5;
+  --atlas-canopy-halo-alpha: 0.03;
+  --atlas-moc-ring-alpha: 0.5;
+  --atlas-moc-ring-width: 0.8;
+  --atlas-selected-halo-scale: 1.88;
+  --atlas-selected-halo-alpha: 0.11;
+  --atlas-selected-ring-gap: 1.6;
+  --atlas-selected-ring-alpha: 0.84;
+  --atlas-selected-ring-width: 0.95;
+  --atlas-context-halo-alpha: 0.08;
+  --atlas-context-ring-alpha: 0.45;
+  --atlas-active-edge-core-width: 1.1;
+  --atlas-active-edge-glow-alpha: 0.09;
+  --atlas-active-edge-glow-width: 3.2;
+  --atlas-topology-field-color: #708eab;
+  --atlas-topology-focus-color: #bdc9d2;
+  --atlas-topology-field-alpha: 0;
+  --atlas-topology-focus-alpha: 0;
+  --atlas-topology-field-radius: 125;
+
+  /* Obsidian Atlas — the no-JavaScript and dark fallback. */
+  --theme-color-meta: #0a0d12;
+  --bg-deepest: var(--obsidian-1000);
+  --bg-primary: var(--obsidian-950);
+  --bg-secondary: var(--obsidian-900);
+  --surface: var(--material-surface-1);
+  --surface-raised: var(--material-surface-2);
+  --surface-hover: var(--material-surface-3);
+  --surface-active: var(--material-surface-hover);
+  --surface-panel: rgba(16, 22, 29, 0.96);
+  --surface-panel-strong: rgba(13, 18, 24, 0.985);
+  --surface-control: rgba(15, 20, 27, 0.97);
+  --surface-graph: rgba(10, 16, 23, 0.88);
+  --surface-code: rgba(12, 14, 16, 0.96);
+  --graph-field: var(--graph-field-base);
+  --text-primary: #f2f3f4;
+  --text-secondary: #cbd0d4;
+  --text-muted: #929da8;
+  --text-faint: #687582;
+  --text-map: #b8c2cb;
+  --precision-silver: #dde0e3;
+  --reading-text: #bec1c3;
+  --reading-muted: #a6adb2;
+  --reading-strong: #e8eaeb;
+  --knowledge-link: #91b8d2;
+  --knowledge-link-hover: #c2d7e4;
+  --knowledge-link-underline: rgba(145, 184, 210, 0.56);
+  --reference-link: #9fadb8;
+  --reference-link-hover: #cbd5dc;
+  --reference-link-underline: rgba(159, 173, 184, 0.5);
+  --metadata-link: #aab4bb;
+  --metadata-link-hover: #d1d7db;
+  --metadata-link-underline: rgba(170, 180, 187, 0.34);
+  --path-accent: var(--accent-gold);
+  --focus-ring: var(--focus-neutral);
+  --identity-accent: #c7ccd0;
+  --identity-background: #0a0d12;
+  --line: rgba(190, 205, 217, 0.1);
+  --line-strong: rgba(190, 205, 217, 0.17);
+  --line-soft: rgba(190, 205, 217, 0.075);
+
+  --graph-label-primary: #aab5c0;
+  --graph-label-secondary: #929da8;
+  --graph-label-muted: #74808c;
+  --graph-label-focus: #dde3e9;
+  --node-understory: var(--material-understory);
+  --node-note: var(--material-steel);
+  --node-canopy: var(--material-canopy);
+  /* Featured notes sit one stellar magnitude above regular canopy. */
+  --node-featured: var(--material-titanium);
+  --node-moc: var(--material-moc-platinum);
+  --node-domain: var(--material-canopy);
+  --node-profile: var(--material-platinum);
+  --node-source: #596d7b;
+  --node-selected: var(--accent-gold);
+  --node-selected-soft: var(--accent-gold-soft);
+  --node-hover: var(--hover-cool);
+  /*
+   * Stellar temperature axis, perceptible dose. Domains shift the star's
+   * color temperature along a real stellar sequence — blue-white (cool
+   * knowledge poles) through neutral silver to champagne (warm humanistic
+   * poles) — while hierarchy stays in the material layer. Chroma stays low
+   * enough to avoid rainbow grouping; selection gold remains the only
+   * saturated warm peak.
+   */
+  --domain-ai: #74a9db;
+  --domain-engineering: #6b93c1;
+  --domain-learning: #7fa3c8;
+  --domain-health: #92b0c8;
+  --domain-overview: #9bacc0;
+  --domain-social: #a6abb6;
+  --domain-humanities: #b7ab97;
+  --domain-business: #bca88b;
+  --domain-finance: #c2ac88;
+  --domain-source: var(--node-source);
+  /*
+   * Keep the published default skeleton unchanged. Hover and selection supply
+   * the chromatic peak: every revealed relationship stays on one
+   * champagne-gold axis, with opacity expressing hierarchy.
+   */
+  --edge-base: rgba(172, 192, 208, 0.44);
+  --edge-long: rgba(172, 192, 208, 0.1);
+  --edge-ultra-long: rgba(172, 192, 208, 0.026);
+  --edge-structure: rgba(200, 216, 228, 0.55);
+  --edge-hover: rgba(224, 197, 140, 0.62);
+  --edge-selected: rgba(224, 197, 140, 0.68);
+  --edge-path: var(--accent-gold);
+  --edge-active-glow: rgba(224, 197, 140, 0.12);
+
+  --edge-default: var(--edge-base);
+  --edge-context: var(--edge-structure);
+  --edge-active: var(--edge-path);
+  --edge-active-secondary: rgba(224, 197, 140, 0.72);
+  --edge-active-context: rgba(224, 197, 140, 0.44);
+  --node-default: var(--node-note);
+  --node-core: var(--material-platinum);
+  --node-label: var(--graph-label-primary);
+  --node-label-strong: #cbd3da;
+  --node-label-selected: #f2eadb;
+  --node-label-stroke: #07090b;
+  --role-start: var(--node-featured);
+  --role-core: var(--node-note);
+  --role-application: var(--node-note);
+  --role-contrast: var(--node-moc);
+  --role-question: var(--node-note);
+  --atlas-field-center: var(--air-steel);
+  --atlas-field-edge: transparent;
+  --cool-air-center: var(--air-steel);
+  --cool-air-mid: rgba(54, 72, 87, 0.018);
+  --graph-grid: transparent;
+  --shadow-panel: 0 22px 72px rgba(0, 0, 0, 0.28);
+  --shadow-media: 0 22px 70px rgba(0, 0, 0, 0.22);
+  --texture-opacity: 0;
+  --page-background: linear-gradient(180deg, #0a0d12 0%, #070a0e 100%);
+
+  /* Compatibility aliases used throughout the existing component system. */
+  --ink: var(--text-primary);
+  --ink-secondary: var(--text-secondary);
+  --ink-muted: var(--text-muted);
+  --ink-faint: var(--text-faint);
+  --surface-deepest: var(--bg-deepest);
+  --surface-base: var(--bg-primary);
+  --surface-default: var(--surface);
+  --surface-emphasis: var(--surface-raised);
+  --accent-secondary: var(--text-secondary);
+  --accent-strong: var(--focus-ring);
+  --accent-active: var(--path-accent);
+}
+
+.stf-view {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: auto;
+  padding: 12px;
+}
+.stf-toolbar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.stf-toolbar input {
+  flex: 1;
+  min-width: 160px;
+}
+.stf-status {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.stf-atlas-host {
+  flex: 1;
+  min-height: 340px;
+  overflow: hidden;
+  color: var(--ink);
+  background: var(--graph-field-base);
+  --page-padding: 16px;
+}
+.stf-atlas-host .knowledge-atlas {
+  width: 100%;
+  height: 100%;
+  min-height: 340px;
+  margin: 0;
+  padding: 0;
+}
+.stf-atlas-host .atlas-stage,
+.stf-atlas-host .atlas-canvas {
+  width: 100%;
+  height: 100%;
+  min-height: 340px;
+}
+.stf-atlas-host .atlas-inspector {
+  max-width: min(300px, 70%);
+}
+.stf-text > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.stf-note-link {
+  height: auto;
+  white-space: normal;
+}
+.stf-filters .setting-item {
+  padding: 6px 0;
+}
+.stf-atlas-host button,
+.stf-atlas-host input {
+  font-family: var(--font-sans);
+}

@@ -1,0 +1,12 @@
+See the Forest Atlas for Obsidian — local development candidate.
+
+Atlas is proprietary and remains governed by the bundled ATLAS-LICENSE.txt.
+This project does not grant permission to redistribute Atlas or publish its source.
+
+SolidJS — MIT — https://github.com/solidjs/solid/blob/main/LICENSE
+PixiJS — MIT — https://github.com/pixijs/pixijs/blob/dev/LICENSE
+
+The build generates full copyright and license notices from the exact bundled
+dependency set reported by esbuild. Missing notices fail the build. This file
+is a source-tree summary; the generated runtime notice is included in the package.
+This candidate has not been approved for public distribution or directory listing.
