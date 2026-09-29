@@ -50,3 +50,64 @@ Node 24、已验签 Atlas 0.1.6 数据 API、稀疏合成链、8 个目录；单
 
 预期隔离测试安装目录：`outputs/obsidian-test-vault/.obsidian/plugins/seetheforest-atlas/`。
 此目录是后续验证目标，目前没有安装结果、截图或录屏；不把准备路径写成已安装证据。
+
+## 2026-09-28 后续：每面板状态与工作区恢复
+
+本节记录插件后续增量，不把前述 Atlas 开发检查升级为兼容验收通过。
+
+- 搜索、标签/附件/未解析/孤立节点开关、局部深度、方向、跟随分别保存在每个面板的工作区状态中。
+- 旧工作区继承插件默认值的独立副本；点击标签只改变当前面板，恢复状态时同步控件。
+- 正文读取需求合并全部面板及全局排除/颜色条件；清空所有相关条件后，下一次索引不再请求正文。
+- 查询变化取消该面板未完成的布局准备；工作区状态白名单不包含正文、完整图或全局设置。
+- `npm run typecheck` 通过；`npm test` 共 19 项通过（此前 11 项，加状态单元测试 5 项、真实视图控制器的宿主替身测试 3 项）。
+- 宿主替身测试使用真实插件入口和视图逻辑，但替换 Obsidian、Vault 读取及 Atlas Runtime；不验证真实 DOM 布局、GPU、Electron、物理或视觉效果，不等于 Obsidian 实装验收。
+- `npm run build` 已执行，仍因锁定的已签名 Atlas 0.1.6 缺少 native host API v1 而拒绝构建；未绕过闸门。
+- `npm run verify:package` 已执行，因无构建制品、缺少 `dist/seetheforest-atlas/integrity.json` 而失败；不能计为通过。
+- 本轮未修改 Atlas、Blog、官网源码或依赖锁，未生成安装包，未安装插件、改动用户笔记或执行 commit/push/发布。
+
+下一闸门仍为取得具备宿主 API、签名核验通过且完成 Blog 兼容验收的 Atlas 制品，再进行隔离安装和真实 Obsidian 验证。
+
+## 2026-09-29：同一签名候选的隔离插件构建
+
+本轮明确授权本地签名候选与两个隔离消费者验证，不授权正式发布或正式依赖升级。
+复用已存在的 clean-source 签名包，未重新读取私钥或重新签名：
+
+- Atlas source `9ebe5bed6b26723f49c8be17447b569e1cedcb45`；版本 `0.1.7-obsidian.3-settling`。
+- 归档 SHA-256 `e45ec833e1169cdd810d3516b332beb6e3f2751251ad318af9afa983c452b1ba`。
+- 独立验签、公钥指纹、干净来源声明、保护清单及文件哈希通过。
+- 插件副本位于 Ops `outputs/obsidian-candidate-20260929/consumer/`；源码包含本工作区尚未提交的面板状态改动。
+- 隔离副本类型检查、22 项测试、build、verify:package 均通过，已生成仅供本地验证的 ZIP。
+- emitted layout Worker 在 Node VM 中离线处理 3 节点 / 3 边并生成 3 个种子；Wasm 编译及缓存物理导出存在性检查通过。这不是实际浏览器 Worker、Electron CSP、GPU 或离线 Obsidian 验收。
+- 已将同字节运行文件放入合成 `test-vault/.obsidian/plugins/seetheforest-atlas/`，没有启动该 Vault、启用插件或操作用户笔记库。
+
+实际发现并处理：
+
+1. 普通 `npm install` 沿用了 0.1.6 的本地归档锁，构建在逐文件校验阶段正确拒绝；隔离副本显式安装新 tarball 更新 lock 后解除。正式锁未动。
+2. `@pixi/colord@2.9.6` npm 包省略许可证全文。插件 notices 脚本增加仅限此精确版本与 MIT 声明的上游原文补充；未知版本/许可继续失败，不修改第三方或 Atlas 包。新增 3 项对应测试。
+   核验来源：[npm 精确版本元数据](https://registry.npmjs.org/@pixi%2Fcolord/2.9.6) 的 gitHead，及
+   [该提交的许可证](https://raw.githubusercontent.com/pixijs/colord/5344fbf77b736f81cd33c21050021bc09bc9dd1d/LICENSE.md)，核验日期 2026-09-29。
+3. Node VM 检查初始未提供浏览器 Worker 具备的 timer globals，出现布局错误；补全测试环境的标准 timer globals 后通过，未修改布局 Worker 或 Atlas 算法。
+
+真实实装阻塞：已阅读 computer-use 技能，但本会话工具目录没有必需的 `node_repl`，无法初始化其 Windows 界面控制入口。
+未绕过工具限制操作正在运行的用户 Obsidian；加载、点击打开、多面板实机、离线实机、关闭/禁用释放均仍待验证。
+Blog 侧由原 Atlas/Blog 负责人对同一包独立回归，不能用插件静态构建替代其验收。
+完整本地回执、首次失败日志和制品身份见 Ops `outputs/obsidian-candidate-20260929/`。
+
+同日 Blog 新回执 `outputs/atlas-blog-regression-20260929/quality-all/graph-quality-report.json`：
+19 场景全部尝试，17 个执行到末尾，行为 82/97、视觉 8/8，整体 `passed:false`。
+强拖动和 Fractional DPR 场景均存在 15 秒未归静，移动面板遮挡、接触能量、局部传播等仍未通过；
+不是只有 Obsidian 桌面工具缺失这一项阻塞，正式候选升级仍为 No-Go。
+
+## 2026-09-30：门禁收敛候选与提交前复核
+
+保留上节旧候选失败历史，以下仅适用于新签名候选：
+
+- Atlas `0.1.7-obsidian.4-gates`，干净来源 `280b91c881833652220c935154e5aa607ef8f2ea`；归档 SHA-256 `a1a2d974b2a240d0be0be3c40bb72f9d1e51135b9a05adc27583e63643c02109`。
+- 同包插件独立验签、保护清单/哈希、typecheck、22 项测试、build、verify:package 全通过；隔离证据位于 Ops `outputs/obsidian-candidate-gates-20260929/`。
+- 相比上一候选，Atlas JavaScript、Worker、Wasm 哈希未变，仅包元数据与移动面板 CSS 改变。测试采样维护另保存于 `f155fb8`，不改变候选运行代码。
+- Blog 原负责人完成全矩阵，主线程独立核验：19/19 场景、106/106 行为、8/8 视觉，页面/异步/清理错误为空。证据为 Ops `outputs/atlas-gate-convergence-20260929/quality-final/graph-quality-report.json`。
+- 验收限定于固定 Blog `fb017aa4b6343772d133cb3ce628b26f749b4466` 的既有隔离适配副本及公开 Notes `018ca791e57f38fbce91a2d069cfa2f7624df5fd`（558 节点 / 846 边）；不覆盖当前 Blog 工作树全部变更。
+- 15 秒体验目标仍有 16368 / 17231 ms 超标，手机局部 3101 ms 超过旧 3100 ms。旧绝对接触能量门槛改为符合现行软接触模型的几何、能量与真实归静检查；没有修改物理参数或提前停止来刷绿。
+- 新制品 layout Worker 在禁用网络的 Node VM 完成合成 3 节点 / 3 边布局，Wasm 可编译；此检查仍不等于真实 Electron / Worker / Obsidian 离线验收。
+- 提交前重新运行插件工作区 typecheck、22 项测试和 diff 检查通过。正式锁仍为 0.1.6，构建通过的事实只针对上述隔离候选，不绕过正式锁的宿主 API 闸门。
+- 用户本轮仅授权 commit + push；不发布 npm、不升级正式消费者、不部署。真实 Obsidian UI、市场分发许可和发行验收仍待完成。

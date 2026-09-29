@@ -26,6 +26,11 @@ import { normalizeSettings, DEFAULTS, type Settings } from "./settings";
 import { compileSearch } from "./search";
 import { readSnapshot } from "./vault-adapter";
 import { LatestJob } from "./scheduler";
+import {
+  normalizeViewOptions,
+  restoreViewState,
+  type ViewOptions,
+} from "./view-state";
 
 const VIEW = "seetheforest-atlas";
 export default class ForestPlugin extends Plugin {
@@ -71,7 +76,7 @@ export default class ForestPlugin extends Plugin {
       async (cancelled) => {
         const snapshot = await readSnapshot(
           this.app,
-          this.settings.query.trim().length > 0 ||
+          this.views().some((view) => view.needsText()) ||
             this.settings.exclusions.length > 0 ||
             this.settings.groups.length > 0,
           cancelled,
@@ -178,6 +183,8 @@ export default class ForestPlugin extends Plugin {
 class ForestView extends ItemView {
   private local = false;
   private centerPath = "";
+  private options: ViewOptions;
+  private syncControls: Array<() => void> = [];
   private status?: HTMLElement;
   private stage?: HTMLElement;
   private text?: HTMLElement;
@@ -190,6 +197,7 @@ class ForestView extends ItemView {
     private plugin: ForestPlugin,
   ) {
     super(leaf);
+    this.options = normalizeViewOptions(undefined, plugin.settings);
   }
   getViewType(): string {
     return VIEW;
@@ -201,32 +209,41 @@ class ForestView extends ItemView {
     return "network";
   }
   getState(): Record<string, unknown> {
-    return { local: this.local, centerPath: this.centerPath };
+    return {
+      local: this.local,
+      centerPath: this.centerPath,
+      options: { ...this.options },
+    };
   }
   async setState(
     state: Record<string, unknown>,
     result: ViewStateResult,
   ): Promise<void> {
-    this.local = state.local === true;
-    this.centerPath =
-      typeof state.centerPath === "string" ? state.centerPath : "";
+    const restored = restoreViewState(state, this.plugin.settings);
+    this.local = restored.local;
+    this.centerPath = restored.centerPath;
+    this.options = restored.options;
+    this.syncControls.forEach((sync) => sync());
     await super.setState(state, result);
-    this.refresh();
+    if (this.needsText()) this.refreshQuery();
+    else this.refresh();
   }
   async onOpen(): Promise<void> {
     this.contentEl.empty();
+    this.syncControls = [];
     this.contentEl.addClass("stf-view");
     const tools = this.contentEl.createDiv({ cls: "stf-toolbar" });
     const search = tools.createEl("input", {
       type: "search",
       placeholder: "搜索：词语、path:、tag:、[属性:值]",
     });
-    search.value = this.plugin.settings.query;
+    search.value = this.options.query;
+    this.syncControls.push(() => {
+      search.value = this.options.query;
+    });
     search.setAttribute("aria-label", "筛选笔记");
     this.registerDomEvent(search, "input", () => {
-      this.plugin.settings.query = search.value;
-      this.plugin.refresh();
-      void this.plugin.persist();
+      this.updateOptions({ query: search.value });
     });
     const retry = tools.createEl("button", { text: "重新读取" });
     this.registerDomEvent(retry, "click", () => {
@@ -246,35 +263,38 @@ class ForestView extends ItemView {
       ["orphans", "孤立节点"],
       ["follow", "局部图跟随当前笔记"],
     ] as const) {
-      new Setting(controls).setName(title).addToggle((toggle) =>
-        toggle.setValue(this.plugin.settings[key]).onChange(async (value) => {
-          this.plugin.settings[key] = value;
-          await this.plugin.persist();
-          this.plugin.views().forEach((view) => view.refresh());
-        }),
-      );
+      new Setting(controls).setName(title).addToggle((toggle) => {
+        toggle.setValue(this.options[key]).onChange((value) => {
+          this.updateOptions({ [key]: value });
+        });
+        this.syncControls.push(() => {
+          toggle.setValue(this.options[key]);
+        });
+      });
     }
-    new Setting(controls).setName("局部关系深度").addSlider((slider) =>
+    new Setting(controls).setName("局部关系深度").addSlider((slider) => {
       slider
         .setLimits(0, 20, 1)
-        .setValue(this.plugin.settings.depth)
+        .setValue(this.options.depth)
         .setDynamicTooltip()
-        .onChange(async (value) => {
-          this.plugin.settings.depth = value;
-          await this.plugin.persist();
-          this.plugin.views().forEach((view) => view.refresh());
-        }),
-    );
-    new Setting(controls).setName("局部关系方向").addDropdown((dropdown) =>
+        .onChange((value) => {
+          this.updateOptions({ depth: value });
+        });
+      this.syncControls.push(() => {
+        slider.setValue(this.options.depth);
+      });
+    });
+    new Setting(controls).setName("局部关系方向").addDropdown((dropdown) => {
       dropdown
         .addOptions({ both: "双向", incoming: "入链", outgoing: "出链" })
-        .setValue(this.plugin.settings.direction)
-        .onChange(async (value) => {
-          this.plugin.settings.direction = value as Settings["direction"];
-          await this.plugin.persist();
-          this.plugin.views().forEach((view) => view.refresh());
-        }),
-    );
+        .setValue(this.options.direction)
+        .onChange((value) => {
+          this.updateOptions({ direction: value as Settings["direction"] });
+        });
+      this.syncControls.push(() => {
+        dropdown.setValue(this.options.direction);
+      });
+    });
     this.stage = this.contentEl.createDiv({ cls: "stf-atlas-host" });
     const details = this.contentEl.createEl("details", { cls: "stf-text" });
     details.createEl("summary", { text: "笔记列表（键盘与屏幕阅读器）" });
@@ -286,6 +306,26 @@ class ForestView extends ItemView {
   }
   async onClose(): Promise<void> {
     this.release();
+    this.syncControls = [];
+  }
+  needsText(): boolean {
+    return this.options.query.trim().length > 0;
+  }
+  private updateOptions(patch: Partial<ViewOptions>): void {
+    const previousQuery = this.options.query;
+    this.options = normalizeViewOptions({ ...this.options, ...patch });
+    this.syncControls.forEach((sync) => sync());
+    this.app.workspace.requestSaveLayout();
+    // Re-read text for any view that needs it; do not persist bodies in workspace state.
+    if (previousQuery !== this.options.query) this.refreshQuery();
+    else this.refresh();
+  }
+  private refreshQuery(): void {
+    this.layoutAbort?.abort();
+    this.layoutAbort = undefined;
+    this.rendered = "";
+    this.status?.setText("正在更新本面板的筛选…");
+    this.plugin.refresh();
   }
   release(): void {
     this.layoutAbort?.abort();
@@ -298,11 +338,13 @@ class ForestView extends ItemView {
     if (
       this.centerPath === oldPath ||
       this.centerPath.startsWith(`${oldPath}/`)
-    )
+    ) {
       this.centerPath = newPath + this.centerPath.slice(oldPath.length);
+      this.app.workspace.requestSaveLayout();
+    }
   }
   follow(path: string): void {
-    if (this.local && this.plugin.settings.follow && this.centerPath !== path) {
+    if (this.local && this.options.follow && this.centerPath !== path) {
       this.centerPath = path;
       this.refresh();
       this.app.workspace.requestSaveLayout();
@@ -314,7 +356,7 @@ class ForestView extends ItemView {
   private projection(): ContentGraph | undefined {
     const index = this.plugin.index;
     if (!index) return;
-    const matches = compileSearch(this.plugin.settings.query);
+    const matches = compileSearch(this.options.query);
     const excluded = this.plugin.settings.exclusions.map((query) =>
       compileSearch(query),
     );
@@ -323,7 +365,7 @@ class ForestView extends ItemView {
       : undefined;
     return projectGraph(
       index,
-      this.plugin.settings,
+      this.options,
       (entry) => matches(entry) && !excluded.some((test) => test(entry)),
       center,
     );
@@ -448,9 +490,7 @@ class ForestView extends ItemView {
     const target = this.plugin.index?.targets.get(id);
     if (!target) return;
     if (target.kind === "tag") {
-      this.plugin.settings.query = `tag:${target.tag}`;
-      this.plugin.refresh();
-      void this.plugin.persist();
+      this.updateOptions({ query: `tag:${target.tag}` });
       return;
     }
     if (target.kind === "unresolved") {
@@ -579,13 +619,18 @@ class ForestSettings extends PluginSettingTab {
         this.display();
       }),
     );
-    new Setting(this.containerEl).setName("恢复默认设置").addButton((button) =>
-      button.setButtonText("恢复").onClick(async () => {
-        this.plugin.settings = normalizeSettings(DEFAULTS);
-        await this.plugin.persist();
-        this.plugin.refresh();
-        this.display();
-      }),
-    );
+    new Setting(this.containerEl)
+      .setName("恢复插件默认设置")
+      .setDesc(
+        "重置排除条件、颜色分组与新面板默认值；不改变已打开面板的独立范围。",
+      )
+      .addButton((button) =>
+        button.setButtonText("恢复").onClick(async () => {
+          this.plugin.settings = normalizeSettings(DEFAULTS);
+          await this.plugin.persist();
+          this.plugin.refresh();
+          this.display();
+        }),
+      );
   }
 }
