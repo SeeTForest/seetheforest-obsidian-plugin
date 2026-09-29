@@ -13,6 +13,10 @@
 真实 Obsidian 实装尚未验收，正式依赖未升级，候选不是正式 Release，不能用于发行。
 不得将类型检查、单元测试或网页预览称为插件交付成功。
 
+2026-09-30 后续已完成社区安装三文件格式的源码适配：签名制品中的 Worker/Wasm 与插件布局
+Worker 随 `main.js` 内嵌，运行时仅创建本地 Blob，不读取额外 `assets/` 或下载依赖。
+新隔离验证见 `outputs/obsidian-community-package-20260930/`（Ops），不能视为已经获市场审核或真实实装通过。
+
 目标是覆盖原生 Graph 的功能并保留 Atlas 体验。当前差距详见
 [原生功能对照](docs/native-graph-parity.md)；这里没有把功能全集缩减成已经完成的 MVP。
 
@@ -46,6 +50,7 @@ npm run typecheck
 npm test
 npm run build
 npm run verify:package
+npm run verify:installed-runtime
 npm run package
 ```
 
@@ -60,7 +65,8 @@ npm run package
 ## 安装方式（须先有通过门禁的包）
 
 将安装包内 `seetheforest-atlas/` 放入所选 Vault 的 `.obsidian/plugins/`，
-保留 `assets/` 及许可文件。Obsidian 设置 → 社区插件中启用 See the Forest Atlas。
+其中运行文件仅为 `main.js`、`manifest.json`、`styles.css`；资源与 Atlas/第三方许可证全文随
+`main.js` 携带，不依赖附加文件下载。Obsidian 设置 → 社区插件中启用 See the Forest Atlas。
 命令面板包含“打开全局星图”“打开局部星图”“重新读取当前笔记库”。
 候选 manifest 暂限桌面，最低版本 1.11.7；本机安装器版本已核对，实际兼容仍待实装验证。
 运行源码没有 Node/Electron API 依赖；移动端解禁需要完成 Blob Worker、Wasm、触摸及资源生命周期实测。
@@ -82,3 +88,5 @@ Atlas 是闭源专有组件；插件的目标分发渠道是 Obsidian 社区插�
 正式发布前仍需确认插件许可、Atlas 再分发许可及市场审核要求，不能通过公开 Atlas 源码绕过该边界。
 Obsidian 社区目录禁止以混淆隐藏用途，闭源代码个案审查；不能承诺已可上架。
 官方来源与核验日期见 [功能对照](docs/native-graph-parity.md)。
+
+打包格式、离线验收边界和后续市场闸门见 [社区安装制品契约](docs/community-package.md)。

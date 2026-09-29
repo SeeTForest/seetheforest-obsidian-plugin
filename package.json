@@ -9,6 +9,7 @@
     "build": "node scripts/build.mjs",
     "prepare:atlas": "node scripts/prepare-atlas.mjs",
     "verify:package": "node scripts/verify-package.mjs",
+    "verify:installed-runtime": "node scripts/verify-installed-runtime.mjs",
     "package": "npm run build && npm run verify:package && node scripts/package.mjs"
   },
   "dependencies": {

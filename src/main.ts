@@ -128,7 +128,7 @@ export default class ForestPlugin extends Plugin {
       }),
     );
     try {
-      await this.runtime.load(this.app, this.manifest);
+      await this.runtime.load();
       this.ready = true;
     } catch (error) {
       this.error = error instanceof Error ? error.message : "Atlas 加载失败";

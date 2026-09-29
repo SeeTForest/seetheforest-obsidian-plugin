@@ -111,3 +111,22 @@ Blog 侧由原 Atlas/Blog 负责人对同一包独立回归，不能用插件静
 - 新制品 layout Worker 在禁用网络的 Node VM 完成合成 3 节点 / 3 边布局，Wasm 可编译；此检查仍不等于真实 Electron / Worker / Obsidian 离线验收。
 - 提交前重新运行插件工作区 typecheck、22 项测试和 diff 检查通过。正式锁仍为 0.1.6，构建通过的事实只针对上述隔离候选，不绕过正式锁的宿主 API 闸门。
 - 用户本轮仅授权 commit + push；不发布 npm、不升级正式消费者、不部署。真实 Obsidian UI、市场分发许可和发行验收仍待完成。
+
+## 2026-09-30 后续：社区安装三文件适配
+
+用户要求继续研发，本轮仅修改插件打包与资源加载，不改 Atlas / Blog，不正式升级依赖、不提交、不推送或发布。
+
+- 官方安装规则重新核验：运行安装文件为 main.js / manifest.json / styles.css，不能依赖 ZIP 附加 assets 目录。
+- 三种资源随 main.js 内嵌，Atlas Worker/Wasm 和插件布局 Worker 与上一已验候选逐字节相同；本地 Blob URL 代替读取插件目录，不访问网络。
+- Atlas/第三方许可证全文随 main.js 的可读注释交付，三文件白名单、字节哈希和通知完整性检查通过。
+- 当前插件工作区：typecheck、27 项测试、diff 检查通过；`npm run build` 仍明确拒绝正式锁 0.1.6 缺少宿主 API，未绕过。
+- 新隔离 consumer 使用同一签名 0.1.7-obsidian.4-gates：独立验签、27 项测试、构建、verify:package、verify:installed-runtime、package 均通过。
+- 实际构建出的 main.js 在 Node VM 的最小 Obsidian 宿主替身中加载，不给 manifest.dir，禁止网络与 Vault adapter 读取；确认三个资源字节正确、Wasm 可编译、三节点布局可计算、取消终止布局任务、重复加载不增加 URL、两实例独立、重复卸载后 Blob URL 为零。
+- VM 验证初期缺少浏览器 window/document 导致模块初始化失败；补充测试环境的标准全局及 Solid 事件注册桩后通过，没有改写 Atlas 以适配测试。测试未挂载 DOM、没有浏览器 Worker 或 GPU，不能称为真实 Obsidian 验收。
+- 运行文件大小：main.js 964420 字节，manifest.json 261 字节，styles.css 55150 字节。ZIP 提取后恰好三个文件且与被测文件哈希一致。
+- 本地测试 ZIP SHA-256：`4eaab185c44d49ad2d0b0404fc43fc34a04a41a875e82778c7d7d120845e790a`。版本号仍是开发候选 0.1.0，不是正式发行。
+- 回执：Ops `outputs/obsidian-community-package-20260930/` 中 checks.json、identity.json、consumer/outputs/installed-runtime-check.json。
+
+本轮重新读取 computer-use 技能并检查工具目录，仍无其要求的 node_repl，未执行 Windows 界面控制。
+真实 Obsidian、浏览器 CSP、GPU、原生功能差距、移动端、插件 LICENSE 与闭源审核依然是独立待办。
+三文件适配只是解除技术分发格式缺口，不是市场准入通过。当前详情见 community-package.md。

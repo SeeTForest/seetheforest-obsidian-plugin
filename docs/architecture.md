@@ -55,7 +55,8 @@ rename 事件迁移文件/文件夹路径，保留 ID；删除清除映射，新
 
 ## 资源、样式和签名
 
-运行资源全部随包，读取插件目录下本地 JS/Wasm，使用 Blob URL 交给实例参数。
+运行资源全部随 `main.js` 内嵌；Atlas JS Worker/Wasm 仍是验签包的原字节，布局 Worker 使用原数据 API 构建。
+从 Base64 还原字节并创建 Blob URL 交给实例参数，不要求社区安装器下载额外资源目录。
 没有 iframe、外部网页、远程 CDN、全局 Worker 覆盖、全局 fetch 补丁或 Electron 协议劫持。
 Native host 参数显式接管 URL、history 与存储；默认 Blog 分支保持现状。
 
@@ -66,6 +67,9 @@ Native host 参数显式接管 URL、history 与存储；默认 Blog 分支保�
 归档 SHA-256、公钥指纹、Ed25519、干净源码标记、逐文件哈希、保护声明均须通过。
 构建还检查本地安装包字节与已验签包一致、公开宿主接口版本、输出白名单和源码/私人路径泄漏。
 不接受 workspace、源码目录、无签名候选或手改压缩 JS。
+
+社区安装仅需 main.js / manifest.json / styles.css，许可证在 main.js 可读注释中，构建完整性清单在 outputs/。
+三文件与字节一致性检查见 community-package.md；模拟宿主测试不代替真实 Obsidian 验收。
 
 ## 尚需实测
 

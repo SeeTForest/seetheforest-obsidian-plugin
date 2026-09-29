@@ -21,7 +21,7 @@ export async function runtimeNotices(root, metafiles) {
       if (match) directories.add(match[1]);
     }
   const notices = [
-    "Third-party runtime notices. Atlas proprietary terms are in ATLAS-LICENSE.txt.",
+    "Third-party runtime notices. Atlas proprietary terms are included in the main.js license banner.",
   ];
   for (const dir of [...directories].sort()) {
     const pkg = JSON.parse(

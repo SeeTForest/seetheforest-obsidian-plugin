@@ -10,6 +10,7 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { verifyAtlas, hash } from "./atlas-verification.mjs";
 import { runtimeNotices } from "./runtime-notices.mjs";
+import { COMMUNITY_FILES, embeddedAssetBytes } from "./package-validation.mjs";
 const root = fileURLToPath(new URL("../", import.meta.url));
 const lock = JSON.parse(
   await readFile(path.join(root, "vendor/atlas.lock.json"), "utf8"),
@@ -39,7 +40,13 @@ for (const [name, digest] of Object.entries(verified.protection.files)) {
     throw Error("Installed Atlas differs from verified release");
 }
 const dist = path.join(root, "dist/seetheforest-atlas");
-await mkdir(path.join(dist, "assets"), { recursive: true });
+await mkdir(dist, { recursive: true });
+// Do not delete an older multi-file output or accept stale resources silently.
+const existing = await readdir(dist);
+if (existing.some((name) => !COMMUNITY_FILES.includes(name)))
+  throw Error(
+    "Old or unexpected output files; use a fresh isolated build directory",
+  );
 const assets = Object.keys(verified.protection.files).filter((name) =>
   name.startsWith("assets/"),
 );
@@ -49,13 +56,11 @@ if (worker.length !== 1 || wasm.length !== 1)
   throw Error(
     "Runtime asset contract requires exactly one Worker and one Wasm",
   );
-for (const name of assets)
-  await writeFile(path.join(dist, name), verified.read(name));
 const layoutBuild = await build({
   metafile: true,
   absWorkingDir: root,
   entryPoints: ["src/layout.worker.ts"],
-  outfile: path.join(dist, "assets/layout.js"),
+  write: false,
   bundle: true,
   platform: "browser",
   format: "iife",
@@ -65,12 +70,25 @@ const layoutBuild = await build({
   minify: true,
   legalComments: "none",
 });
-assets.push("assets/layout.js");
+const embeddedBytes = {
+  worker: verified.read(worker[0]),
+  wasm: verified.read(wasm[0]),
+  layout: Buffer.from(layoutBuild.outputFiles[0].contents),
+};
+const embeddedAssets = Object.fromEntries(
+  Object.entries(embeddedBytes).map(([role, bytes]) => [
+    role,
+    {
+      bytes: bytes.length,
+      sha256: hash(bytes),
+    },
+  ]),
+);
 const mainBuild = await build({
   metafile: true,
   absWorkingDir: root,
   entryPoints: ["src/main.ts"],
-  outfile: path.join(dist, "main.js"),
+  write: false,
   bundle: true,
   platform: "browser",
   format: "cjs",
@@ -81,14 +99,29 @@ const mainBuild = await build({
   minify: true,
   legalComments: "none",
   define: {
-    __ATLAS_ASSETS__: JSON.stringify({
-      worker: worker[0],
-      wasm: wasm[0],
-      layout: "assets/layout.js",
-    }),
+    __ATLAS_ASSETS__: JSON.stringify(
+      Object.fromEntries(
+        Object.entries(embeddedBytes).map(([role, bytes]) => [
+          role,
+          bytes.toString("base64"),
+        ]),
+      ),
+    ),
   },
   loader: { ".css": "empty" },
 });
+const notices =
+  verified.read("LICENSE").toString() +
+  "\n\n" +
+  (await runtimeNotices(root, [layoutBuild.metafile, mainBuild.metafile]));
+if (notices.includes("*/"))
+  throw Error("License notice cannot be safely included in the bundle banner");
+const main =
+  `/*! See the Forest bundled runtime notices\n${notices}\n*/\n` +
+  mainBuild.outputFiles[0].text;
+// Verify all three payloads survived bundling byte-for-byte before writing.
+embeddedAssetBytes(main, embeddedAssets);
+await writeFile(path.join(dist, "main.js"), main);
 await copyFile(
   path.join(root, "manifest.json"),
   path.join(dist, "manifest.json"),
@@ -99,37 +132,28 @@ await writeFile(
     "\n" +
     (await readFile(path.join(root, "styles.css"), "utf8")),
 );
-await writeFile(path.join(dist, "ATLAS-LICENSE.txt"), verified.read("LICENSE"));
-await writeFile(
-  path.join(dist, "THIRD-PARTY-NOTICES.txt"),
-  await runtimeNotices(root, [layoutBuild.metafile, mainBuild.metafile]),
-);
-const files = [
-  "main.js",
-  "manifest.json",
-  "styles.css",
-  "ATLAS-LICENSE.txt",
-  "THIRD-PARTY-NOTICES.txt",
-  ...assets,
-];
+const files = COMMUNITY_FILES;
 // An existing output is never silently accepted if it has extra files.
 const actual = (await readdir(dist, { recursive: true, withFileTypes: true }))
   .filter((x) => x.isFile())
   .map((x) =>
     path.relative(dist, path.join(x.parentPath, x.name)).replaceAll("\\", "/"),
   );
-if (actual.some((name) => !files.includes(name) && name !== "integrity.json"))
+if (actual.some((name) => !files.includes(name)))
   throw Error(
     "Unexpected file in package directory; inspect output before packaging",
   );
+await mkdir(path.join(root, "outputs"), { recursive: true });
 await writeFile(
-  path.join(dist, "integrity.json"),
+  path.join(root, "outputs/package-integrity.json"),
   JSON.stringify(
     {
       version: JSON.parse(
         await readFile(path.join(root, "manifest.json"), "utf8"),
       ).version,
       atlas: { version: lock.version, sha256: lock.sha256 },
+      embeddedAssets,
+      noticesSha256: hash(notices),
       files: Object.fromEntries(
         await Promise.all(
           files.map(async (name) => [

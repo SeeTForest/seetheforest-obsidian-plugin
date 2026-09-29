@@ -2,15 +2,15 @@ import { createComponent, createSignal } from "solid-js";
 import { render } from "solid-js/web";
 import * as atlas from "@seetheforest/atlas/solid";
 import type { AtlasView, ForestLayoutSeed } from "@seetheforest/atlas";
-import type { App, PluginManifest } from "obsidian";
 import type { ContentGraph, GraphNode } from "./graph";
 import type { JSX } from "solid-js";
+import {
+  createRuntimeAssetUrls,
+  type EmbeddedRuntimeAssets,
+  type RuntimeAssetUrls,
+} from "./runtime-assets";
 
-declare const __ATLAS_ASSETS__: {
-  worker: string;
-  wasm: string;
-  layout: string;
-};
+declare const __ATLAS_ASSETS__: EmbeddedRuntimeAssets;
 interface HostRuntime {
   ATLAS_HOST_API_VERSION: number;
   KnowledgeAtlas(props: {
@@ -31,35 +31,23 @@ interface HostRuntime {
 /** The only runtime Atlas import. No upstream source links or artifact rewriting. */
 export class AtlasRuntime {
   private disposed = false;
-  private urls: string[] = [];
+  private resources?: RuntimeAssetUrls;
   private assets?: { workerUrl: string; wasmUrl: string };
   private layoutUrl = "";
   private api = atlas as unknown as HostRuntime;
-  async load(app: App, manifest: PluginManifest): Promise<void> {
+  async load(): Promise<void> {
+    if (this.disposed) throw new Error("Atlas 已卸载。");
+    if (this.resources) return;
     if (this.api.ATLAS_HOST_API_VERSION !== 1)
       throw new Error(
         "Atlas 签名制品不含本地宿主接口 v1，请安装匹配版本的完整插件包。",
       );
-    const directory = manifest.dir;
-    if (!directory) throw new Error("无法确定插件资源目录。");
-    try {
-      const make = async (path: string, type: string) => {
-        const bytes = await app.vault.adapter.readBinary(
-          `${directory}/${path}`,
-        );
-        if (this.disposed) throw new Error("Atlas 已卸载。");
-        const url = URL.createObjectURL(new Blob([bytes], { type }));
-        this.urls.push(url);
-        return url;
-      };
-      const workerUrl = await make(__ATLAS_ASSETS__.worker, "text/javascript");
-      const wasmUrl = await make(__ATLAS_ASSETS__.wasm, "application/wasm");
-      this.layoutUrl = await make(__ATLAS_ASSETS__.layout, "text/javascript");
-      this.assets = { workerUrl, wasmUrl };
-    } catch (error) {
-      this.dispose();
-      throw error;
-    }
+    this.resources = createRuntimeAssetUrls(__ATLAS_ASSETS__);
+    this.layoutUrl = this.resources.layoutUrl;
+    this.assets = {
+      workerUrl: this.resources.workerUrl,
+      wasmUrl: this.resources.wasmUrl,
+    };
   }
   prepare(
     graph: ContentGraph,
@@ -68,6 +56,10 @@ export class AtlasRuntime {
     return new Promise((resolve, reject) => {
       if (signal.aborted) {
         reject(new DOMException("Cancelled", "AbortError"));
+        return;
+      }
+      if (this.disposed || !this.resources) {
+        reject(new Error("Atlas 运行资源尚未就绪。"));
         return;
       }
       const worker = new Worker(this.layoutUrl, {
@@ -154,7 +146,8 @@ export class AtlasRuntime {
   dispose(): void {
     this.disposed = true;
     this.assets = undefined;
-    this.urls.forEach((url) => URL.revokeObjectURL(url));
-    this.urls = [];
+    this.resources?.dispose();
+    this.resources = undefined;
+    this.layoutUrl = "";
   }
 }
