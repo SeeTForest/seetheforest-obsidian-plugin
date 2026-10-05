@@ -2,6 +2,43 @@
 
 核验日期：2026-09-30。实现是本地开发候选，不是发布授权或市场审核结论。
 
+## 制品身份与命名
+
+2026-10-05 明确工程与用户命名的区别；本节不代表重新核验平台政策或通过发行验收。
+
+- 构建工程：`seetheforest-obsidian-plugin`，由本工程的 `scripts/build.mjs` 和 `scripts/package.mjs` 生成插件制品。
+- 用户展示名：`See the Forest Atlas`；安装 ID 与目录：`seetheforest-atlas`。
+- 本地 ZIP：`seetheforest-atlas-obsidian-<插件版本>.zip`；文件名中的版本来自插件 `manifest.json.version`，不是 Atlas 版本。
+- ZIP 内的 `seetheforest-atlas/` 是插件安装目录，不是 Atlas 源码目录；其三个运行文件均是插件工程的构建输出。
+- 内含组件：锁定并验签的 `@seetheforest/atlas` 运行制品。Atlas npm 归档不是可直接安装的 Obsidian 插件。
+
+不为匹配仓库名而变更现有展示名、安装 ID、ZIP 名称或目录结构。对外可称“See the Forest Atlas 插件”；
+工程交付应称“`seetheforest-obsidian-plugin` 构建的 See the Forest Atlas 插件，内含 Atlas 运行组件”。
+Atlas 版本、插件版本、各自的 Release 与验收结论独立管理。
+
+## 构建与验收追溯
+
+当前信息分布在构建清单与候选回执中，不应把其中一个文件误认为完整来源证明：
+
+| 事实 | 当前记录位置 / 字段 |
+| --- | --- |
+| 插件工程名称 | 插件 `package.json.name` |
+| 用户名称、安装 ID、插件版本 | 插件 `manifest.json`；构建清单顶层 `version` 是插件版本 |
+| 插件源码身份 | 隔离候选的 `identity.json`：`pluginBaseCommit`、`sourceIncludesUncommittedChanges`、`sourceHashes` |
+| 内含 Atlas 版本与输入归档哈希 | `outputs/package-integrity.json` 的 `atlas.version`、`atlas.sha256`；与实际消费的锁及验签记录核对 |
+| 三个运行文件、内嵌资源与许可文本哈希 | `outputs/package-integrity.json` 的 `files`、`embeddedAssets`、`noticesSha256` |
+| ZIP 哈希 | `outputs/<ZIP 文件名>.sha256`；现有候选 `identity.json` 也保存 `zipSha256` |
+
+现有三文件候选的身份回执位于 Ops `outputs/obsidian-community-package-20260930/identity.json`，
+对应构建清单位于该目录下的 `consumer/outputs/package-integrity.json`。两者共同记录上述来源；
+`pluginBaseCommit` 只是构建时的源码基点，该回执明确包含未提交改动，不能将基点单独当作完整构建源码。
+不能在后续提交后倒改历史回执，使其看似由干净提交构建。
+
+当前常规构建脚本自动产生完整性清单和打包摘要，但不会自动生成上述包含插件 Git 来源的候选 `identity.json`。
+每次交付须同时保存实际来源回执与对应制品摘要；隔离副本不得把父 Ops 仓库的 HEAD 冒充插件提交。
+缺少来源记录时只能声明字节核验结果，不能宣称完成源码追溯或正式发行验收。
+这些构建端记录不增加用户安装目录的文件，也不替代签名或真实 Obsidian 测试。
+
 ## 官方安装边界
 
 [官方插件发布说明](https://docs.obsidian.md/plugins/releasing/submit-plugin) 列出的安装下载文件为

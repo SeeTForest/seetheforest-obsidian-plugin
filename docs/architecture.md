@@ -1,5 +1,19 @@
 # 本地数据、缓存与运行边界
 
+## 产品与依赖边界
+
+`seetheforest-obsidian-plugin` 是独立插件工程，负责 Obsidian API 接入、Vault 数据适配、
+原生工作区交互与插件生命周期；`seetheforest-atlas` 是被依赖的闭源组件工程，负责星图
+视觉、交互、布局及物理数学计算。插件不是 Atlas 的一种直接导出格式，也不在本仓库复制这些算法。
+
+用户看到的 `See the Forest Atlas` 是插件展示名。安装 ID `seetheforest-atlas` 与组件仓库同名，
+但代表不同层次：前者标识安装在 Obsidian 中的插件，后者是组件源码仓库。
+本插件仅通过 `@seetheforest/atlas` 的已验签受保护制品接入上游，不反向改变 Atlas 的产品职责。
+
+Atlas 的宿主接口由组件提供，插件用它连接自己实现的 Obsidian API 适配；不能把 Obsidian
+文件、工作区和插件 API 的接入职责移入 Atlas。Blog、官网和插件的依赖升级与验收分别进行，
+不得因插件构建、命名或发布而自动改变其他消费者的依赖、默认视觉、交互或物理数学行为。
+
 ## 数据流
 
 ```text

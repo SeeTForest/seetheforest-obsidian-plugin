@@ -3,6 +3,23 @@
 把当前 Obsidian 笔记库的真实链接网络交给 See the Forest Atlas 显示，在原生工作区中探索并打开笔记。
 不需要见林 Vault 框架、Profile、Codex、网站构建、账号或网络服务。笔记不会被改写或上传。
 
+## 产品名称与工程身份
+
+用户安装的插件展示名是 **See the Forest Atlas**，其构建来源是本仓库
+`seetheforest-obsidian-plugin`，不是 `seetheforest-atlas` 仓库直接导出的插件。
+
+| 层次 | 名称或标识 | 职责 |
+| --- | --- | --- |
+| 插件工程 / `package.json.name` | `seetheforest-obsidian-plugin` | Obsidian 数据、命令、视图、设置、生命周期及最终插件构建 |
+| 用户展示名 / `manifest.json.name` | `See the Forest Atlas` | 用户识别和启用插件时看到的名称 |
+| 安装标识 / `manifest.json.id` | `seetheforest-atlas` | 插件身份与 `.obsidian/plugins/seetheforest-atlas/` 安装目录，不表示源码来源 |
+| 上游组件仓库 / npm 依赖 | `seetheforest-atlas` / `@seetheforest/atlas` | 独立闭源的知识网络视觉、交互与计算系统 |
+
+构建关系为：Atlas 仓库生成签名受保护依赖包，本插件工程消费该包并完成 Obsidian 适配，
+再由本插件工程生成安装文件。展示名、安装标识与仓库名不要求相同，本次不修改这些配置。
+插件版本与 Atlas 版本独立管理；Atlas 发布或 Blog 回归通过，不等于插件发布或 Obsidian 验收通过。
+制品命名和双版本追溯见 [社区安装制品契约](docs/community-package.md)。
+
 ## 当前状态：开发候选，尚非可安装交付
 
 2026-09-28 已建立源码、数据适配、视图、设置、测试及受保护制品构建门禁。
@@ -64,6 +81,8 @@ npm run package
 
 ## 安装方式（须先有通过门禁的包）
 
+这里安装的是 `seetheforest-obsidian-plugin` 构建的 See the Forest Atlas 插件，
+其中包含受保护的 Atlas 运行组件；不能将 Atlas 的 npm `.tgz` 当作插件安装包。
 将安装包内 `seetheforest-atlas/` 放入所选 Vault 的 `.obsidian/plugins/`，
 其中运行文件仅为 `main.js`、`manifest.json`、`styles.css`；资源与 Atlas/第三方许可证全文随
 `main.js` 携带，不依赖附加文件下载。Obsidian 设置 → 社区插件中启用 See the Forest Atlas。
