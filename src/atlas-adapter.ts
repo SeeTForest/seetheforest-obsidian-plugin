@@ -19,6 +19,7 @@ interface HostRuntime {
     layoutSeed: ForestLayoutSeed[];
     immersive: boolean;
     host: {
+      nodeActivation: "select";
       runtimeAssets: { workerUrl: string; wasmUrl: string };
       openNode(node: GraphNode, event: MouseEvent | KeyboardEvent): void;
       nodeHref(node: GraphNode): string;
@@ -123,6 +124,8 @@ export class AtlasRuntime {
           },
           immersive: true,
           host: {
+            // Node selection stays in Atlas; explicit reading links navigate.
+            nodeActivation: "select",
             runtimeAssets: this.assets!,
             openNode,
             nodeHref: (node) => `#${encodeURIComponent(node.id)}`,

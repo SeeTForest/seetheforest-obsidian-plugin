@@ -49,7 +49,7 @@ export default class ForestPlugin extends Plugin {
     this.settings = normalizeSettings(data?.settings);
     this.ids = new Identities(data?.identities);
     this.registerView(VIEW, (leaf) => new ForestView(leaf, this));
-    this.addRibbonIcon("network", "打开见林星图", () => {
+    this.addRibbonIcon("network", "打开 Atlas 全局星图", () => {
       void this.open(false);
     });
     this.addCommand({
@@ -233,6 +233,10 @@ class ForestView extends ItemView {
     this.syncControls = [];
     this.contentEl.addClass("stf-view");
     const tools = this.contentEl.createDiv({ cls: "stf-toolbar" });
+    const scope = tools.createEl("span", { cls: "stf-scope" });
+    this.syncControls.push(() => {
+      scope.setText(this.local ? "局部星图" : "全局星图");
+    });
     const search = tools.createEl("input", {
       type: "search",
       placeholder: "搜索：词语、path:、tag:、[属性:值]",
@@ -254,16 +258,31 @@ class ForestView extends ItemView {
       cls: "stf-status",
       attr: { role: "status", "aria-live": "polite" },
     });
-    const controls = this.contentEl.createEl("details", { cls: "stf-filters" });
+    const workspace = this.contentEl.createDiv({ cls: "stf-workspace" });
+    const sidebar = workspace.createEl("aside", {
+      cls: "stf-sidebar",
+      attr: { "aria-label": "星图范围与笔记导航" },
+    });
+    const controls = sidebar.createEl("details", { cls: "stf-filters" });
+    controls.open = true;
     controls.createEl("summary", { text: "范围与过滤" });
+    const scopeNote = controls.createEl("p", { cls: "stf-panel-hint" });
+    this.syncControls.push(() => {
+      scopeNote.setText(
+        this.local
+          ? `围绕：${this.centerPath || "请先选择笔记"}`
+          : "显示整个笔记库中的关系。筛选仅影响当前面板。",
+      );
+    });
+    const visibility = controls.createDiv({ cls: "stf-filter-group" });
+    visibility.createEl("h3", { text: "显示内容" });
     for (const [key, title] of [
       ["tags", "标签"],
       ["attachments", "附件"],
       ["existingOnly", "仅已有笔记"],
       ["orphans", "孤立节点"],
-      ["follow", "局部图跟随当前笔记"],
     ] as const) {
-      new Setting(controls).setName(title).addToggle((toggle) => {
+      new Setting(visibility).setName(title).addToggle((toggle) => {
         toggle.setValue(this.options[key]).onChange((value) => {
           this.updateOptions({ [key]: value });
         });
@@ -272,7 +291,30 @@ class ForestView extends ItemView {
         });
       });
     }
-    new Setting(controls).setName("局部关系深度").addSlider((slider) => {
+    const localControls = controls.createDiv({ cls: "stf-local-controls" });
+    localControls.createEl("h3", { text: "局部探索" });
+    this.syncControls.push(() => {
+      localControls.hidden = !this.local;
+    });
+    new Setting(localControls)
+      .setName("局部图跟随当前笔记")
+      .addToggle((toggle) => {
+        toggle
+          .setValue(this.options.follow)
+          .onChange((follow) => this.updateOptions({ follow }));
+        this.syncControls.push(() => {
+          toggle.setValue(this.options.follow);
+        });
+      });
+    const depthLabel = localControls.createEl("p", { cls: "stf-panel-hint" });
+    this.syncControls.push(() => {
+      depthLabel.setText(
+        this.options.depth === 0
+          ? "深度 0 · 仅中心笔记"
+          : `深度 ${this.options.depth} · 从中心向外展开的关系层数`,
+      );
+    });
+    new Setting(localControls).setName("局部关系深度").addSlider((slider) => {
       slider
         .setLimits(0, 20, 1)
         .setValue(this.options.depth)
@@ -284,24 +326,34 @@ class ForestView extends ItemView {
         slider.setValue(this.options.depth);
       });
     });
-    new Setting(controls).setName("局部关系方向").addDropdown((dropdown) => {
-      dropdown
-        .addOptions({ both: "双向", incoming: "入链", outgoing: "出链" })
-        .setValue(this.options.direction)
-        .onChange((value) => {
-          this.updateOptions({ direction: value as Settings["direction"] });
+    new Setting(localControls)
+      .setName("局部关系方向")
+      .addDropdown((dropdown) => {
+        dropdown
+          .addOptions({ both: "双向", incoming: "入链", outgoing: "出链" })
+          .setValue(this.options.direction)
+          .onChange((value) => {
+            this.updateOptions({ direction: value as Settings["direction"] });
+          });
+        this.syncControls.push(() => {
+          dropdown.setValue(this.options.direction);
         });
-      this.syncControls.push(() => {
-        dropdown.setValue(this.options.direction);
       });
+    const details = sidebar.createEl("details", { cls: "stf-text" });
+    details.open = true;
+    details.createEl("summary", { text: "笔记列表" });
+    details.createEl("p", {
+      cls: "stf-panel-hint",
+      text: "点击条目打开原文；也支持键盘与屏幕阅读器。",
     });
-    this.stage = this.contentEl.createDiv({ cls: "stf-atlas-host" });
-    const details = this.contentEl.createEl("details", { cls: "stf-text" });
-    details.createEl("summary", { text: "笔记列表（键盘与屏幕阅读器）" });
-    this.text = details.createDiv();
+    this.text = details.createEl("ul", {
+      cls: "stf-note-list",
+      attr: { "aria-label": "当前范围内的笔记与节点" },
+    });
     this.registerDomEvent(details, "toggle", () => {
       if (details.open) this.renderText();
     });
+    this.stage = workspace.createDiv({ cls: "stf-atlas-host" });
     this.refresh();
   }
   async onClose(): Promise<void> {
@@ -371,6 +423,7 @@ class ForestView extends ItemView {
     );
   }
   refresh(_topologyChanged = true): void {
+    this.syncControls.forEach((sync) => sync());
     if (!this.stage || !this.plugin.ready || !this.plugin.index) {
       this.showError();
       return;
@@ -446,12 +499,33 @@ class ForestView extends ItemView {
     try {
       const graph = this.projection();
       if (!graph) return;
+      if (!graph.nodes.length)
+        this.text.createEl("li", {
+          cls: "stf-list-empty",
+          text: "没有匹配的节点，请调整搜索或过滤。",
+        });
       // Text fallback never truncates the knowledge network.
       for (const node of graph.nodes) {
-        const button = this.text.createEl("button", {
-          text: node.title,
+        const target = this.plugin.index?.targets.get(node.id);
+        const context =
+          target?.kind === "file"
+            ? target.path
+            : target?.kind === "tag"
+              ? `标签 · ${target.tag}`
+              : target?.kind === "unresolved"
+                ? `未解析 · ${target.source} → ${target.link}`
+                : "节点";
+        const row = this.text.createEl("li");
+        const button = row.createEl("button", {
           cls: "stf-note-link",
+          attr: {
+            type: "button",
+            title: context,
+            "aria-label": `${node.title} · ${context}`,
+          },
         });
+        button.createEl("span", { cls: "stf-note-title", text: node.title });
+        button.createEl("span", { cls: "stf-note-path", text: context });
         button.addEventListener("click", (event) => {
           void this.openNode(node.id, event);
         });

@@ -156,3 +156,55 @@ Blog 侧由原 Atlas/Blog 负责人对同一包独立回归，不能用插件静
 本轮重新读取 computer-use 技能并检查工具目录，仍无其要求的 node_repl，未执行 Windows 界面控制。
 真实 Obsidian、浏览器 CSP、GPU、原生功能差距、移动端、插件 LICENSE 与闭源审核依然是独立待办。
 三文件适配只是解除技术分发格式缺口，不是市场准入通过。当前详情见 community-package.md。
+
+## 2026-10-05：节点选择与显式阅读分离
+
+- 修复目标：单击节点或对节点按 Enter/空格只选中并显示卡片；“阅读原文”、右键打开、文本后备笔记按钮才打开原生笔记。拖动抑制沿用 Atlas，阅读标签复用且星图保留。
+- 插件显式设置 `host.nodeActivation: "select"`；上游省略该参数仍保持旧原生宿主打开行为，Blog 无 host 路径不变。构建拒绝缺少此参数的签名包，不静默安装仍会抢跳转的旧版本。
+- Atlas 本地提交 `9e17d347b8ec59f166338f507f0274376a66cfa4`；签名版本 `0.1.7-obsidian.5-selection`；归档 SHA-256 `faa718230ac055a6479cc826a7f0a7bc93536cc12fa8a5e5e7e16ff8f1d7077e`。
+- 插件来源：`edf7dffe6ad4afc88d0dc0719f144ff9556ee041` 加本轮未提交修改，包括 Ribbon 提示明确化、选择模式接入、门禁、测试和文档。逐文件来源摘要见回执，不将候选误标为干净插件提交。
+- 隔离目录 `artifacts/validation/select-before-read-20261005/`：独立验签、候选锁定、安装、typecheck、30 项测试、build、verify:package、verify:installed-runtime、package 共 9 步通过。正式插件及 Blog/官网锁不变。
+- 新增测试覆盖鼠标 Ribbon、适配器选择模式与显式打开回调、原生阅读文件定位/标签复用/修饰键；宿主替身不是真实 Obsidian UI。既有三文件离线 VM 检查继续通过。
+- Atlas Worker/Wasm 与插件布局 Worker 对比上一候选字节一致；不以改变物理计算或渲染样式处理导航问题。
+- 本地插件 0.1.0 ZIP：`consumer/outputs/seetheforest-atlas-obsidian-0.1.0.zip`；SHA-256 `f4eac80d4b1ff74a044069085321c8b883a24c8d5d2cde0757da2f3da4de71ae`。这是测试候选，不是社区发行。
+- 构建时尚未更新固定测试 Vault；用户已确认关闭。安装、Blog 全矩阵及真实 Obsidian 结果须分别追加，不能预先计为通过。
+
+本轮 Blog 首次全矩阵（原负责人执行，本线程读取 JSON 核对）：
+
+- 固定 Blog `fb017aa4b6343772d133cb3ce628b26f749b4466`、公开 Notes `018ca791e57f38fbce91a2d069cfa2f7624df5fd`，558 节点 / 846 边；沿用既有 8 张截图，不更新基线或阈值。
+- 19 个场景完成，行为 104/106，视觉 8/8，整体 `passed: false`。证据位于 Atlas 工程 `outputs/validation/node-activation/quality/graph-quality-report.json`。
+- `ambient-idle-does-not-restart-mechanical-integration`：steps 3729 → 3729，但 ticks 4282 → 4282，未观察到动态计数继续推进。
+- `atlas-worker-rest-stability-7`：归静后的观察窗口内 steps 490 → 493。不能只根据物理制品未变化就宣布此项通过；根因由上游做同环境基线对照。
+- 原负责人另报告 4 次归静超过 15 秒体验目标，最长约 23.9 秒。它们并非本次硬门禁失败项，但不应隐去。
+- 完整兼容门槛未通过前，保留原固定 Vault 运行文件；不推送、发布或升级正式锁。后续结果另行追加，保留本次失败证据。
+
+同日后续收敛（仍为 No-Go）：
+
+- 上一 `.4-gates` 同环境完整对照为 19/19 场景完成、105/106 行为、8/8 视觉；同样失败于静息 tick 检查。源码规定静息动态延迟 1800ms，而旧用例约在 1470ms 内要求 tick 增长，存在测试时序冲突。
+- 原 Atlas/Blog 负责人仅修改忽略目录中的测试采样：有界等待真实 ambient 阶段，从首次 rest 起持续观察 Worker 提交/确认步数，并等待对应 DOM 绘制发布。保留全部物理不变量、截图基线和阈值，不改产品 runtime 或签名包；原始测试、精确 diff、身份和 7 项控制测试见 Atlas `outputs/validation/node-activation/sampling-evidence/`。
+- 修正采样后的矩阵见同目录 `quality-sampling-2/graph-quality-report.json`：18/19 场景完成，行为 104/105、视觉 3/8，`completed: false`、`passed: false`。前一次预览未就绪的启动失败单独保存在 `quality-sampling-1/`。
+- 本轮 ambient 通过，10 次归静观察没有发现 rest 后新增 Worker 积分；其中一次 DOM 从 621 补发至 625，而首次 rest 的 Worker 已确认 625。此证据说明确有延迟发布问题，但不能据此将首次失败改写为通过。
+- 当前剩余：`inspectDirectManipulationCameraLock` 等待相机运动窗口超时 30000ms；hover-focus、selected-ordinary、selected-moc、active-drag、released-rest 五张截图超出原阈值。页面、异步与清理错误为空；截图差异根因尚未确认，不能拼接前轮视觉通过与本轮行为通过作为完整验收。
+- 固定测试 Vault 未更新，新 ZIP 保留但不用于替换现有测试版本。需先收敛相机/截图专项诊断；如果需要改变产品默认行为或验收标准，另行取得用户明确决定。
+- 上游最终交接为 Atlas `outputs/validation/node-activation/sampling-evidence/REVIEW.md`；观察器控制测试后续补至 8/8 通过。已结束本轮验证，未重复完整重跑寻找通过；下一最小范围是相机动作窗口与截图动态相位的只读时序诊断。
+
+## 2026-10-05：插件控制栏与笔记列表布局
+
+- 仅调整插件 `src/main.ts` 与局部作用域 `styles.css`：顶部搜索、左侧可折叠控制栏、右侧星图；窄面板使用容器查询上下排列，控制栏独立滚动。未修改 Atlas 主题 token、源码、签名制品、物理参数、正式依赖锁或 Blog。
+- 过滤分为显示内容与局部探索；全局图隐藏局部选项，但不重置保存值。笔记列表改为语义 ul/li、标题与路径两行、左对齐、长文本换行、同名路径辨识、空结果提示；保留打开/右键/键盘语义。
+- 工作区及隔离消费者 typecheck、32 项测试通过。隔离候选仍消费同一已签名 `.5-selection`；9 步验签/构建/制品/VM/打包流程全部通过，Worker、Wasm、布局 Worker 原字节未变。
+- 回执与包：`artifacts/validation/ui-layout-20261005/identity.json`、`checks.json`、`consumer/outputs/`。该包包括上一轮尚未安装的选择/阅读分离改动，不能绕开其 Blog No-Go。
+- `check-layout.mjs` 通过本机 Chromium 运行真实插件 bundle 与签名 Atlas，使用合成笔记及 Obsidian DOM/API 替身。1440×900 全局、1024×768 局部、390×844 窄面板、1024×768 浅色主题四组均无页面异常或横向溢出，局部选项显隐正确，星图区高度不少于 340px，列表左对齐。
+- 四张截图已人工检查：`wide.png`、`local.png`、`narrow.png`、`light.png`；`layout-check.json` 保存尺寸结果。替身控件/宿主 CSS 不等同真实 Obsidian，截图不构成真实实装、完整无障碍或移动端兼容验收。
+- 固定 `test-vaults/AtlasPlugin-Test/` 未修改；本轮无 commit、push、发布。上一节 Blog 相机/交互截图未过项继续保留。
+- 正式工作区也执行了 build 与 verify:package：前者按预期被 0.1.6 缺宿主 API 拦截，后者因没有 package-integrity.json 失败；不能记为通过。上文构建成功仅针对已验签 `.5-selection` 的隔离消费者。
+
+### 同日调整：控制栏置于右侧
+
+按用户要求将宽面板改为左侧星图、右侧 260px 控制栏；窄面板仍为上方控制、下方星图。仅修改宿主 CSS Grid 区域及文档，构建后的 main.js、manifest.json 和 Atlas 依赖哈希与上一布局候选完全一致。
+`artifacts/validation/ui-right-sidebar-20261005/` 保存独立制品及截图；隔离 typecheck、32 项测试、构建/制品/VM 检查通过。四组浏览器检查通过，新增宽屏控制栏位于星图右侧的几何断言，窄屏仍无横向溢出。
+已查看宽屏截图；浏览器宿主替身不等于真实 Obsidian 实装。固定 Vault 未更新，Blog No-Go 不变，无提交、推送或发布。
+
+### 同日源码保存授权
+
+用户随后明确要求 commit + push。本次仅保存插件仓库上述源码、测试与文档；提交前再次运行 typecheck、32 项测试与 diff 检查通过。Atlas 本地候选提交、正式依赖锁、测试 Vault、发布与部署均不在此次推送范围，Blog No-Go 继续有效；前文“未提交”指对应候选构建时的历史状态。

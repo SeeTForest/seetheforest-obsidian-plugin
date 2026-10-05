@@ -222,9 +222,10 @@
 }
 
 .stf-view {
+  container: stf-view / inline-size;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   overflow: auto;
   padding: 12px;
 }
@@ -232,6 +233,110 @@
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+  align-items: center;
+}
+.stf-scope {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.stf-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 260px;
+  grid-template-areas: "atlas sidebar";
+  gap: 12px;
+  flex: 1;
+  min-height: 340px;
+}
+.stf-sidebar {
+  grid-area: sidebar;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  scrollbar-gutter: stable;
+}
+.stf-workspace > .stf-atlas-host {
+  grid-area: atlas;
+}
+.stf-sidebar > details {
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 10px;
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+.stf-sidebar summary {
+  padding: 12px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+}
+.stf-sidebar summary::marker {
+  color: var(--text-muted);
+}
+.stf-sidebar summary:focus-visible,
+.stf-sidebar .stf-note-link:focus-visible {
+  outline: 2px solid var(--interactive-accent);
+  outline-offset: -3px;
+}
+.stf-panel-hint {
+  margin: 0 12px 12px;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.stf-filter-group,
+.stf-local-controls {
+  padding: 0 12px 8px;
+}
+.stf-local-controls {
+  border-top: 1px solid var(--background-modifier-border);
+  padding-top: 12px;
+}
+.stf-local-controls[hidden] {
+  display: none;
+}
+.stf-sidebar h3 {
+  margin: 0 0 6px;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+.stf-local-controls .stf-panel-hint {
+  margin: 4px 0;
+}
+.stf-sidebar .setting-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.stf-sidebar .setting-item-info {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  text-align: left;
+}
+.stf-sidebar .setting-item-name {
+  font-size: 12px;
+  line-height: 1.5;
+}
+.stf-sidebar .setting-item-control {
+  flex: 0 0 auto;
+  padding: 0;
+  gap: 6px;
+}
+.stf-sidebar .setting-item-control input[type="range"] {
+  width: 84px;
+  margin: 0;
+}
+.stf-sidebar .setting-item-control select {
+  max-width: 96px;
 }
 .stf-toolbar input {
   flex: 1;
@@ -242,6 +347,8 @@
   font-size: 12px;
 }
 .stf-atlas-host {
+  min-width: 0;
+  border-radius: 10px;
   flex: 1;
   min-height: 340px;
   overflow: hidden;
@@ -265,17 +372,59 @@
 .stf-atlas-host .atlas-inspector {
   max-width: min(300px, 70%);
 }
-.stf-text > div {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+.stf-note-list {
+  margin: 0;
+  padding: 0 6px 6px;
+  list-style: none;
 }
-.stf-note-link {
+.stf-note-list > li {
+  margin: 0;
+  padding: 0;
+}
+.stf-sidebar .stf-note-link {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 3px;
+  width: 100%;
+  padding: 9px 8px;
+  text-align: left;
   height: auto;
   white-space: normal;
+  border: 0;
+  border-radius: 6px;
+  box-shadow: none;
+  background: transparent;
 }
-.stf-filters .setting-item {
-  padding: 6px 0;
+.stf-sidebar .stf-note-link:hover {
+  background: var(--background-modifier-hover);
+}
+.stf-note-title {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-normal);
+  overflow-wrap: anywhere;
+}
+.stf-note-path {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+.stf-list-empty {
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+@container stf-view (max-width: 760px) {
+  .stf-workspace {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(340px, 1fr);
+    grid-template-areas: "sidebar" "atlas";
+  }
+  .stf-sidebar {
+    max-height: 240px;
+  }
 }
 .stf-atlas-host button,
 .stf-atlas-host input {

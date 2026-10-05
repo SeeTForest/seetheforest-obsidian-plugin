@@ -30,6 +30,10 @@ if (
   throw Error(
     "Atlas signed baseline has no native host API v1. A reviewed, signed upstream release is required; refusing an unusable plugin package.",
   );
+if (!types.includes("nodeActivation?"))
+  throw Error(
+    "Atlas signed release lacks host.nodeActivation. A signed select-before-read candidate is required; refusing conflicting node navigation.",
+  );
 // Check that bundling consumes exactly the independently verified package.
 for (const [name, digest] of Object.entries(verified.protection.files)) {
   if (

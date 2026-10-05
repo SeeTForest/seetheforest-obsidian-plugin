@@ -12,6 +12,9 @@ class ElementDouble {
   settings = new Map<string, ControlDouble>();
   value = "";
   text = "";
+  open = false;
+  hidden = false;
+  attributes: Record<string, string> = {};
   parentElement?: ElementDouble;
   constructor(
     public tag = "div",
@@ -21,9 +24,11 @@ class ElementDouble {
     this.children = [];
   }
   addClass(_cls: string) {}
-  setAttribute(_key: string, _value: string) {}
-  hasAttribute(_key: string) {
-    return false;
+  setAttribute(key: string, value: string) {
+    this.attributes[key] = value;
+  }
+  hasAttribute(key: string) {
+    return key === "open" ? this.open : key in this.attributes;
   }
   setText(text: string) {
     this.text = text;
@@ -31,10 +36,18 @@ class ElementDouble {
   createDiv(options: { cls?: string } = {}) {
     return this.createEl("div", options);
   }
-  createEl(tag: string, options: { cls?: string; text?: string } = {}) {
+  createEl(
+    tag: string,
+    options: {
+      cls?: string;
+      text?: string;
+      attr?: Record<string, string>;
+    } = {},
+  ) {
     const child = new ElementDouble(tag, options.cls);
     child.parentElement = this;
     child.text = options.text ?? "";
+    child.attributes = options.attr ?? {};
     this.children.push(child);
     return child;
   }
@@ -96,6 +109,8 @@ class SettingDouble {
 class PluginDouble {
   factory!: (leaf: any) => any;
   saved: unknown[] = [];
+  ribbons: Array<{ icon: string; title: string; callback: () => void }> = [];
+  commands: Array<{ id: string; callback?: () => void }> = [];
   manifest = {};
   constructor(public app: any) {}
   async loadData() {
@@ -107,8 +122,12 @@ class PluginDouble {
   registerView(_type: string, factory: (leaf: any) => any) {
     this.factory = factory;
   }
-  addRibbonIcon() {}
-  addCommand() {}
+  addRibbonIcon(icon: string, title: string, callback: () => void) {
+    this.ribbons.push({ icon, title, callback });
+  }
+  addCommand(command: { id: string; callback?: () => void }) {
+    this.commands.push(command);
+  }
   addSettingTab() {}
   register() {}
   registerEvent() {}
@@ -132,6 +151,9 @@ class RuntimeDouble {
     return new Promise<never>(() => {});
   }
   dispose() {}
+}
+class FileDouble {
+  constructor(public path: string) {}
 }
 const snapshot: Snapshot = {
   files: [
@@ -178,8 +200,11 @@ async function fixture() {
     ItemView: ViewDouble,
     PluginSettingTab: class {},
     Setting: SettingDouble,
-    TFile: class {},
-    Keymap: {},
+    TFile: FileDouble,
+    Keymap: {
+      isModEvent: (event: { ctrlKey?: boolean }) =>
+        event.ctrlKey ? "tab" : false,
+    },
     Notice: class {},
     Modal: class {},
     Menu: class {},
@@ -220,15 +245,112 @@ const search = (view: any): ElementDouble =>
   view.contentEl.find((el: ElementDouble) => el.tag === "input")!;
 const filters = (view: any): ElementDouble =>
   view.contentEl.find((el: ElementDouble) => el.cls === "stf-filters")!;
+const control = (view: any, name: string): ControlDouble =>
+  filters(view)
+    .find((el) => el.settings.has(name))!
+    .settings.get(name)!;
+
+test("explicit reading opens the exact note in a reusable reader without replacing the graph", async () => {
+  const f = await fixture();
+  try {
+    const view = await f.view();
+    const file = new FileDouble("科学/光.md");
+    const opened: unknown[] = [];
+    const reader = {
+      openFile: async (target: unknown) => {
+        opened.push(target);
+      },
+    };
+    let created = 0;
+    let revealed = 0;
+    f.plugin.index.targets.set("read-test", { kind: "file", path: file.path });
+    f.plugin.app.vault.getAbstractFileByPath = (target: string) => {
+      assert.equal(target, "科学/光.md");
+      return file;
+    };
+    f.plugin.app.workspace.getLeaf = (mode: string) => {
+      assert.equal(mode, "tab");
+      created++;
+      return reader;
+    };
+    f.plugin.app.workspace.iterateAllLeaves = (
+      visit: (leaf: unknown) => void,
+    ) => {
+      visit(view.leaf);
+      if (created) visit(reader);
+    };
+    f.plugin.app.workspace.revealLeaf = async (target: unknown) => {
+      assert.equal(target, reader);
+      revealed++;
+    };
+    await view.openNode("read-test", {});
+    await view.openNode("read-test", {});
+    assert.deepEqual(opened, [file, file]);
+    assert.equal(created, 1);
+    assert.equal(revealed, 2);
+    assert.equal(f.plugin.views()[0], view);
+    await view.openNode("read-test", { ctrlKey: true });
+    assert.equal(created, 2);
+    assert.equal(opened.length, 3);
+    assert.equal(f.plugin.views()[0], view);
+  } finally {
+    f.plugin.onunload();
+  }
+});
+
+test("mouse ribbon opens the global Atlas tab without the command palette", async () => {
+  const f = await fixture();
+  try {
+    const states: unknown[] = [];
+    let revealed = 0;
+    const leaf = {
+      setViewState: async (state: unknown) => {
+        states.push(state);
+      },
+    };
+    f.plugin.app.workspace.getActiveFile = () => null;
+    f.plugin.app.workspace.getLeaf = (mode: string) => {
+      assert.equal(mode, "tab");
+      return leaf;
+    };
+    f.plugin.app.workspace.revealLeaf = async (target: unknown) => {
+      assert.equal(target, leaf);
+      revealed++;
+    };
+    assert.equal(f.plugin.ribbons.length, 1);
+    const ribbon = f.plugin.ribbons[0];
+    assert.equal(ribbon.icon, "network");
+    assert.equal(ribbon.title, "打开 Atlas 全局星图");
+    ribbon.callback();
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    assert.deepEqual(states, [
+      {
+        type: "seetheforest-atlas",
+        active: true,
+        state: { local: false, centerPath: undefined },
+      },
+    ]);
+    assert.equal(revealed, 1);
+    // The optional command uses the same route; no keyboard action is required.
+    f.plugin.commands
+      .find((command: { id: string }) => command.id === "open-global")
+      .callback();
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    assert.deepEqual(states[1], states[0]);
+    assert.equal(revealed, 2);
+  } finally {
+    f.plugin.onunload();
+  }
+});
 
 test("real view events isolate filters, depth and follow across panels", async () => {
   const f = await fixture();
   try {
     const a = await f.view({ local: true, centerPath: "A.md" });
     const b = await f.view({ local: true, centerPath: "B.md" });
-    filters(a).settings.get("标签")!.change(true);
-    filters(a).settings.get("局部关系深度")!.change(4);
-    filters(a).settings.get("局部图跟随当前笔记")!.change(false);
+    control(a, "标签").change(true);
+    control(a, "局部关系深度").change(4);
+    control(a, "局部图跟随当前笔记").change(false);
     a.follow("C.md");
     b.follow("C.md");
     assert.equal(a.getState().options.tags, true);
@@ -249,7 +371,7 @@ test("restored controls and tag navigation stay local; indexing sees all views' 
     const a = await f.view({ options: { query: "content:光", depth: 3 } });
     const b = await f.view();
     assert.equal(search(a).value, "content:光");
-    assert.equal(filters(a).settings.get("局部关系深度")!.value, 3);
+    assert.equal(control(a, "局部关系深度").value, 3);
     const pending = f.plugin.runtime.signals.at(-1)!;
     search(b).value = "path:A";
     search(b).events.get("input")!();
@@ -292,6 +414,74 @@ test("workspace round trip restores a view without sharing its mutable state", a
     assert.equal(b.getState().centerPath, "新目录/A.md");
     assert.equal(b.getState().options.follow, false);
     assert.ok(f.layoutSaves() > 0);
+  } finally {
+    f.plugin.onunload();
+  }
+});
+
+test("sidebar groups controls and exposes local options only in a local graph", async () => {
+  const f = await fixture();
+  try {
+    const view = await f.view();
+    const find = (cls: string) =>
+      view.contentEl.find((el: ElementDouble) => el.cls === cls)!;
+    assert.equal(find("stf-local-controls").hidden, true);
+    assert.equal(find("stf-scope").text, "全局星图");
+    assert.equal(find("stf-filters").parentElement, find("stf-sidebar"));
+    assert.equal(find("stf-text").parentElement, find("stf-sidebar"));
+    assert.equal(find("stf-atlas-host").parentElement, find("stf-workspace"));
+    await view.setState(
+      { local: true, centerPath: "A.md", options: { depth: 3 } },
+      {},
+    );
+    assert.equal(find("stf-local-controls").hidden, false);
+    assert.equal(find("stf-scope").text, "局部星图");
+    assert.equal(control(view, "局部关系深度").value, 3);
+    await view.setState({ local: false, options: { depth: 3 } }, {});
+    assert.equal(find("stf-local-controls").hidden, true);
+    assert.equal(view.getState().options.depth, 3);
+  } finally {
+    f.plugin.onunload();
+  }
+});
+
+test("note rows distinguish duplicate titles by path, preserve navigation and show empty state", async () => {
+  const f = await fixture();
+  try {
+    f.plugin.index = buildGraph(
+      {
+        ...snapshot,
+        files: [
+          { ...snapshot.files[0]!, path: "科学/光.md", title: "光" },
+          { ...snapshot.files[0]!, path: "生活/光.md", title: "光" },
+        ],
+      },
+      f.plugin.ids,
+    );
+    const view = await f.view();
+    const list = view.contentEl.find(
+      (el: ElementDouble) => el.cls === "stf-note-list",
+    )!;
+    assert.equal(list.tag, "ul");
+    assert.equal(list.children.length, 2);
+    const buttons = list.children.map((row: ElementDouble) => row.children[0]!);
+    assert.deepEqual(
+      buttons.map((button: ElementDouble) => button.children[1]!.text),
+      ["科学/光.md", "生活/光.md"],
+    );
+    assert.notEqual(
+      buttons[0].attributes["aria-label"],
+      buttons[1].attributes["aria-label"],
+    );
+    let opened = "";
+    view.openNode = (id: string) => {
+      opened = id;
+    };
+    buttons[1].events.get("click")!();
+    assert.equal(f.plugin.index.targets.get(opened).path, "生活/光.md");
+    await view.setState({ options: { query: "path:不存在" } }, {});
+    view.renderText();
+    assert.equal(list.children[0]!.cls, "stf-list-empty");
   } finally {
     f.plugin.onunload();
   }
