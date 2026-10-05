@@ -2,6 +2,8 @@ node_modules/
 vendor/*
 !vendor/atlas.lock.json
 outputs/
+artifacts/
+test-vaults/
 dist/
 *.log
 .local/

@@ -1,5 +1,17 @@
 # 验证记录与交付闸门
 
+## 当前测试位置与历史路径迁移（2026-10-05）
+
+唯一活动测试 Vault 为本仓库 `test-vaults/AtlasPlugin-Test/`，从原
+Ops `outputs/obsidian-validation-20261005/AtlasPlugin-Test/` 原样迁移。后续原地迭代，不重新建库。
+插件构建候选按批次保存在本仓库 `artifacts/validation/`；这是制品隔离，不是 Vault 隔离重建。
+
+下文及原始回执的 Ops `outputs/obsidian-candidate-20260929/`、`outputs/obsidian-candidate-gates-20260929/`、
+`outputs/obsidian-community-package-20260930/`、`outputs/obsidian-validation-20261005/` 均已迁入
+本仓库 `artifacts/validation/<原目录名>/`。历史路径仅表示当时位置；失败证据不重写、不删除。
+前三个旧消费者的 `node_modules/` 清理，源码、锁文件、签名包和制品保留；最新消费者依赖保留。
+本次迁移不新增真实 Obsidian 验收通过结论，也不更改 Atlas 或 Blog。
+
 ## 验收对象说明
 
 2026-10-05 补充：本文的“插件”指 `seetheforest-obsidian-plugin` 构建的 **See the Forest Atlas**，

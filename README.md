@@ -24,7 +24,7 @@
 
 2026-09-28 已建立源码、数据适配、视图、设置、测试及受保护制品构建门禁。
 当前源码工作区仍锁定 Atlas 0.1.6，它是视觉与数据基线，但不含原生宿主接口，因此在本工作区运行 `npm run build` 仍会被拦截。
-2026-09-30 已在 Ops 的 `outputs/obsidian-candidate-gates-20260929/consumer/` 独立副本中消费
+2026-09-30 已在独立副本（现位于本仓库 `artifacts/validation/obsidian-candidate-gates-20260929/consumer/`）中消费
 已签名的 `0.1.7-obsidian.4-gates`，完成类型检查、22 项测试、构建和制品检查。
 同包已通过固定 Blog 快照的 19 个场景、106 项行为、8 项视觉对照；部分强拖动仍超过 15 秒体验目标。
 真实 Obsidian 实装尚未验收，正式依赖未升级，候选不是正式 Release，不能用于发行。
@@ -32,7 +32,7 @@
 
 2026-09-30 后续已完成社区安装三文件格式的源码适配：签名制品中的 Worker/Wasm 与插件布局
 Worker 随 `main.js` 内嵌，运行时仅创建本地 Blob，不读取额外 `assets/` 或下载依赖。
-新隔离验证见 `outputs/obsidian-community-package-20260930/`（Ops），不能视为已经获市场审核或真实实装通过。
+三文件隔离验证见本仓库 `artifacts/validation/obsidian-community-package-20260930/`，不能视为已经获市场审核或真实实装通过。
 
 目标是覆盖原生 Graph 的功能并保留 Atlas 体验。当前差距详见
 [原生功能对照](docs/native-graph-parity.md)；这里没有把功能全集缩减成已经完成的 MVP。
@@ -80,6 +80,20 @@ npm run package
 单独替换归档或仅运行普通 `npm install` 可能仍安装旧锁对应的缓存包；构建会逐文件比对并拒绝不匹配制品。
 
 ## 安装方式（须先有通过门禁的包）
+
+### 固定人工验收 Vault
+
+本机持续使用本仓库的 `test-vaults/AtlasPlugin-Test/`，不要按日期或构建批次创建新的活动 Vault。
+2026-10-05 已将原 Ops 构建目录中的测试 Vault 原样迁入此处；在 Obsidian 中使用“打开文件夹作为仓库”
+选择新位置。后续新增用例、测试笔记、插件设置和工作区状态均在此迭代，不重新复制初始模板。
+
+对应测试候选及来源回执位于本仓库 `artifacts/validation/obsidian-validation-20261005/`，
+ZIP 位于其中 `consumer/outputs/seetheforest-atlas-obsidian-0.1.0.zip`。这是插件 0.1.0 + Atlas
+0.1.7-obsidian.4-gates 的本地候选，不是正式发行。候选按批次保留，Vault 不随批次改变。
+更新时先关闭该 Vault 或禁用插件，仅替换校验通过的 `main.js`、`manifest.json`、`styles.css`，
+保留插件 `data.json`、其他 `.obsidian` 配置和全部测试笔记。`test-vaults/` 不进入 Git 或发布制品。
+
+### 其他 Vault 的手动安装
 
 这里安装的是 `seetheforest-obsidian-plugin` 构建的 See the Forest Atlas 插件，
 其中包含受保护的 Atlas 运行组件；不能将 Atlas 的 npm `.tgz` 当作插件安装包。

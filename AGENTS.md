@@ -11,5 +11,7 @@
 - 必需的通用宿主接口在 Atlas 上游实现并验证。缺少合格制品时构建必须失败，不以替代图冒充。
 - 无云上传、遥测、账号、支付、自动更新和远程运行时依赖。
 - `outputs/`、`vendor/`、`node_modules/` 不入 Git。制品白名单不得包含测试库、笔记、源码地图、内部文档或机器路径。
+- 隔离构建与历史证据放在本仓库 `artifacts/validation/`，不再放 Ops 根 `outputs/`；`artifacts/` 与 `test-vaults/` 均不入 Git。本仓库现有 `dist/`、`outputs/` 构建契约保持兼容。
+- 唯一活动人工测试 Vault 固定为本仓库 `test-vaults/AtlasPlugin-Test/`。按需求增量维护，不每次构建创建新 Vault；保留用户笔记、data.json、启用状态及工作区配置。更新前关闭相关 Vault 或禁用插件，只替换经核验的三个插件运行文件，不重置整个 Vault。
 - 交付前运行 `npm run typecheck`、`npm test`、`npm run build`、`npm run verify:package`；真实 Obsidian 验证与单元测试分别报告。
 - 保留其他仓库与用户修改。移动端未验证不得宣称兼容；功能对照中的差距不得称为全部完成。

@@ -29,7 +29,7 @@ Atlas 版本、插件版本、各自的 Release 与验收结论独立管理。
 | 三个运行文件、内嵌资源与许可文本哈希 | `outputs/package-integrity.json` 的 `files`、`embeddedAssets`、`noticesSha256` |
 | ZIP 哈希 | `outputs/<ZIP 文件名>.sha256`；现有候选 `identity.json` 也保存 `zipSha256` |
 
-现有三文件候选的身份回执位于 Ops `outputs/obsidian-community-package-20260930/identity.json`，
+现有三文件候选的身份回执现位于本仓库 `artifacts/validation/obsidian-community-package-20260930/identity.json`，
 对应构建清单位于该目录下的 `consumer/outputs/package-integrity.json`。两者共同记录上述来源；
 `pluginBaseCommit` 只是构建时的源码基点，该回执明确包含未提交改动，不能将基点单独当作完整构建源码。
 不能在后续提交后倒改历史回执，使其看似由干净提交构建。
@@ -38,6 +38,11 @@ Atlas 版本、插件版本、各自的 Release 与验收结论独立管理。
 每次交付须同时保存实际来源回执与对应制品摘要；隔离副本不得把父 Ops 仓库的 HEAD 冒充插件提交。
 缺少来源记录时只能声明字节核验结果，不能宣称完成源码追溯或正式发行验收。
 这些构建端记录不增加用户安装目录的文件，也不替代签名或真实 Obsidian 测试。
+
+2026-10-05 新构建的来源回执位于 `artifacts/validation/obsidian-validation-20261005/identity.json`，
+使用干净插件提交 `47d1832`，并明确记录隔离副本的两份 Atlas 依赖锁覆盖及换行差异。
+该批次的 Vault 已独立迁入固定 `test-vaults/AtlasPlugin-Test/`；构建批次只保留制品与证据，
+不再作为日常 Vault 所在位置。旧回执保留当时路径，不倒改历史；目录迁移见 [验证记录](validation.md)。
 
 ## 官方安装边界
 
