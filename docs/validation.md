@@ -233,3 +233,12 @@ Blog 侧由原 Atlas/Blog 负责人对同一包独立回归，不能用插件静
 - 与此前右侧布局候选相比，Atlas Worker、Wasm 与插件布局 Worker 哈希全部不变。正式 Atlas 锁仍为 0.1.6，固定测试 Vault 未覆盖，未运行真实 Obsidian 验收。
 - Atlas 原负责人已获准整理采样测试并执行有界完整回归，但因其线程随后收到用户“提交、推送、部署”请求而暂停。负责人确认本次尚未创建测试分支、提交采样修正或执行新全矩阵；以 Blog `origin/main` 的正式锁 `0.1.6-inspector.4` 为拟定主基线（不同于本插件锁 0.1.6）。等待任务优先级确认，完整 Blog No-Go 仍有效。
 - 用户已授权仅插件仓库 commit + push，用于后续托管源码 CI 验证；不改变仓库可见性、不上传 Atlas 包、不发布 Release、不提交社区、不部署。此前“未提交”保留为当时历史事实；托管 CI 结果另行报告。
+
+### 同日本地脚本优先入口
+
+- 上述改动已由提交 `4fc9cdd` 保存并推送，托管源码 CI `37440708308` 的 Windows / Ubuntu 均通过；受保护完整 CI 未触发。
+- 用户随后要求 CI 以本地脚本和调用文档为主。新增 `scripts/ci.bat` 与 `scripts/ci.sh`，只转发到已有 `ci.mjs`；原 npm 入口不变，没有重写构建逻辑或新增 GitHub 任务。`AGENTS.md` 固化本地优先约束，README / `ci.md` 补全前提、调用和产物位置。
+- Windows `.bat source` 与 Git Bash `.sh source`（从仓库外调用）均通过：回执分别为 `artifacts/validation/ci/source-kJvr0q/receipt.json`、`source-f3TarK/receipt.json`。各自完成源码 lint、38 项插件测试与 9 项 CI 测试；不等同 Linux/macOS 原生 shell 已实测。
+- 新增入口测试使用含空格路径的合成 runner，核验不同工作目录下定位、参数转发、非零退出码透传，并限制工作流只调用既有本地入口；`sh -n scripts/ci.sh` 通过，shell 脚本固定 LF。
+- `.bat full` 返回 1，在 `atlas-preflight` 正确拒绝当前正式 0.1.6 缺少宿主 API；回执 `artifacts/validation/ci/full-ANsJGP/receipt.json`。不能记为完整构建通过，未修改锁、Atlas 或插件运行代码。
+- 上述本地验证完成时，新增入口尚未提交、推送，未运行新托管矩阵，也未覆盖测试 Vault。用户随后授权仅插件仓库 commit + push；不扩大到依赖升级、发布或部署。

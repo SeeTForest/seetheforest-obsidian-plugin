@@ -1,6 +1,46 @@
-# 插件持续集成与重复验证
+# 插件本地验证脚本与按需 CI
 
-更新：2026-10-05。CI 只验证本插件，不发布、不更新正式 Atlas Lock、不覆盖测试 Vault。
+更新：2026-10-06。本地脚本为主，GitHub Actions 为可选调用层。验证只针对本插件，不发布、不更新正式 Atlas Lock、不覆盖测试 Vault。
+
+## 本地优先：如何调用
+
+检查、构建、打包、验签及失败退出逻辑都在仓库 `scripts/` 中。`ci.bat` / `ci.sh` 只转发参数和退出码到
+现有跨平台 `ci.mjs`，不另写一套 shell/Python 实现。Node 本来就是插件的必要构建工具，无需额外安装 Python。
+不需要 GitHub 账号、Actions runner 或云端 Secret 才能运行本地验证。
+
+前提：Node.js **24**（含 npm）在 PATH 中；首次安装公共依赖需要访问 npm 注册表；完整验证额外需要系统 `tar`
+以及已批准、与锁一致的 `vendor/atlas.tgz`、`atlas.sig`、`atlas-public.pem`。只验证签名，不读取私钥。
+无需先执行根目录 `npm install` / `npm ci`：脚本在独立副本内安装依赖，源码检查不需要 Atlas 包。
+
+在插件仓库根目录运行，二选一：
+
+```bat
+rem Windows cmd；PowerShell 中可用 .\scripts\ci.bat source
+scripts\ci.bat source
+rem 准备好受保护输入后运行完整管线
+scripts\ci.bat full
+```
+
+```sh
+# Linux / macOS / Git Bash；不需要 chmod 或管理员权限
+sh scripts/ci.sh source
+sh scripts/ci.sh full
+```
+
+原有 `npm run ci:source` / `npm run ci:full`，以及 `node scripts/ci.mjs source|full`（选择一个模式）均调用同一实现。
+入口可从其他工作目录使用绝对路径调用，包含空格的路径需要加引号；输出始终归属脚本所在插件仓库，不归属当前终端目录。
+`.sh` 固定 LF 换行，`.bat` 固定 CRLF。模式缺失、不合法或额外参数会失败，不隐式运行全量构建。
+
+获准准备 Atlas 本地输入时使用既有 `npm run prepare:atlas -- <tgz> <sig> <pem>`；更换版本仍需独立的依赖升级授权，
+本次只增加验证入口，不更改正式锁。日常验证不需要下载器 `fetch:atlas`，更不需要签名权限。
+
+成功退出码为 `0`，失败为非零。终端最后输出 `receipt.json` 的相对位置；在其同目录查看失败阶段的 `.log`
+和 `.error.log`。完整构建成功后的安装三文件位于 `workspace/dist/`，ZIP 和完整性清单位于 `workspace/outputs/`。
+不得把失败/未完成的回执当成发行批准，也不要把含闭源上下文的详细日志上传到公共 issue。
+
+职责分工：`ci.mjs` 编排与回执，`ci-contract.mjs` 版本/依赖契约，`atlas-verification.mjs` 验签与接口门禁，
+`build.mjs` 构建，`verify-*.mjs` 制品检查，`package*.mjs` 打包，`benchmark.ts` 合成基准。
+新增重复性工作先进入相应本地脚本和测试，GitHub 只调用它。
 
 2026-10-06 增量：源码 CI 增加官方 Obsidian 非类型 lint；完整 CI 增加完整推荐类型 lint 和经签名核验的
 50 / 500 / 4096 节点合成基准。lint 的 warning 不冒充零警告，性能基准不冒充真实 Obsidian/GPU 验收。
@@ -10,8 +50,8 @@
 
 | 入口 | 输入与权限 | 执行范围 | 不代表什么 |
 | --- | --- | --- | --- |
-| `npm run ci:source` | Node.js 24、公共 npm 依赖；不需要 Atlas 或密钥 | 版本/许可/依赖契约、现有插件单测、CI 与打包负例 | 不做完整类型检查、实际 Atlas 构建或视觉验收 |
-| `npm run ci:full` | 同上，加当前 Lock 对应的已签名 Atlas 三个输入文件、系统 tar | 验签与宿主接口预检、锁定安装、完整类型检查、全部测试、构建、三文件与内嵌资源检查、实际包 VM 检查、ZIP 回读 | 不是真实 Obsidian、GPU、Blog 视觉回归或发行批准 |
+| `scripts\ci.bat source` / `sh scripts/ci.sh source` / `npm run ci:source` | Node.js 24、公共 npm 依赖；不需要 Atlas 或密钥 | 版本/许可/依赖契约、非类型 lint、现有插件单测、CI 与打包负例 | 不做完整类型检查、实际 Atlas 构建或视觉验收 |
+| `scripts\ci.bat full` / `sh scripts/ci.sh full` / `npm run ci:full` | 同上，加当前 Lock 对应的已签名 Atlas 三个输入文件、系统 tar | 验签与宿主接口预检、锁定安装、完整 lint / 类型检查、全部测试、构建、三文件与内嵌资源检查、实际包 VM 检查、合成基准、ZIP 回读 | 不是真实 Obsidian、GPU、Blog 视觉回归或发行批准 |
 
 两条命令都从源码白名单建立新隔离副本，位于本产品的
 `artifacts/validation/ci/<source或full>-<随机标识>/workspace/`。
@@ -27,7 +67,12 @@
 并拒绝额外本地路径或非公共 npm 注册表输入。它不伪造 Atlas 类型或实现，因而不能宣称完整 typecheck 通过。
 实际适配层行为测试使用明确的宿主替身；完整管线才读取真实 Atlas 公开类型和运行字节。
 
-## GitHub Actions
+## 按需使用 GitHub Actions
+
+保留现有两个薄工作流，不增加新任务：源码矩阵用于本机难以同时覆盖的 Windows / Ubuntu 与 PR 检查；
+受保护完整构建仅供未来需要独立远端复核时手动使用，当前不要求开启。通常先完成本地 source / full，
+需要跨平台或评审证据才借助托管任务；本地 full 不以配置 GitHub Environment 为前提。
+YAML 只保留事件、runner、Node 环境、权限、审批边界和脚本调用；不内嵌测试、打包、验签算法或多行 shell 流程。
 
 - `source-ci.yml`：PR、main push 或手动触发；Ubuntu / Windows，Node 24。
 - `protected-ci.yml`：仅 main 上手动触发；Ubuntu / Windows，受 `atlas-ci` Environment 管理。其他 ref 被跳过，不是验收通过。
@@ -70,7 +115,9 @@ Token 仅传给下载步骤，不传给安装、测试或构建。CI 不需要�
 本机无需使用该下载器：可继续 `npm run prepare:atlas -- <tgz> <sig> <pem>` 使用已批准本地包。
 
 工作流使用 GitHub 托管 runner（需要 Node 24 Action 运行支持）；不要未经审查改成持久化共享 self-hosted runner。
-本次未配置以上远端事项、未调用受保护远端下载，也没有托管 CI 运行成功的证据。
+2026-10-06，插件提交 `4fc9cdd` 的[托管源码矩阵](https://github.com/SeeTForest/seetheforest-obsidian-plugin/actions/runs/37440708308)
+已在 Windows / Ubuntu 通过。这是此前版本的源码验证证据，不含本次新增入口，不等于完整受保护构建。
+尚未配置上述受保护远端事项或调用受保护远端下载；本次也不修改远端配置。
 
 ## 打包与版本契约
 

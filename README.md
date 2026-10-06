@@ -65,8 +65,10 @@ Worker 随 `main.js` 内嵌，运行时仅创建本地 Blob，不读取额外 `a
 
 ## 本地开发
 
-重复验证已统一为 `npm run ci:source`（不需要 Atlas）和 `npm run ci:full`（验签的完整隔离构建）。
-GitHub Actions 分为公共源码 PR 检查和受保护的手动构建，详见 [CI 与配置说明](docs/ci.md)。
+本地脚本是重复验证的主入口：Windows 使用 `scripts\ci.bat source` / `scripts\ci.bat full`，
+Linux/macOS/Git Bash 使用 `sh scripts/ci.sh source` / `sh scripts/ci.sh full`。
+两者复用 `scripts/ci.mjs`，原有 `npm run ci:source` / `npm run ci:full` 同样有效；无需先在源码目录安装依赖。
+GitHub Actions 只是跨平台源码检查与可选受保护构建的调用层，不承载另一套逻辑；本地前提、命令与结果位置见 [CI 与配置说明](docs/ci.md)。
 源码检查通过不表示完整兼容验收通过；当前正式 Atlas 0.1.6 会被完整管线正确拦截。
 
 Node.js 24，npm lock 固定依赖。先取得已批准的 Atlas 包、分离签名和可信公钥，

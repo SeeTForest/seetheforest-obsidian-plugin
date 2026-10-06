@@ -14,4 +14,5 @@
 - 隔离构建与历史证据放在本仓库 `artifacts/validation/`，不再放 Ops 根 `outputs/`；`artifacts/` 与 `test-vaults/` 均不入 Git。本仓库现有 `dist/`、`outputs/` 构建契约保持兼容。
 - 唯一活动人工测试 Vault 固定为本仓库 `test-vaults/AtlasPlugin-Test/`。按需求增量维护，不每次构建创建新 Vault；保留用户笔记、data.json、启用状态及工作区配置。更新前关闭相关 Vault 或禁用插件，只替换经核验的三个插件运行文件，不重置整个 Vault。
 - 交付前运行 `npm run typecheck`、`npm test`、`npm run build`、`npm run verify:package`；真实 Obsidian 验证与单元测试分别报告。
+- CI 本地脚本优先：检查、构建、打包和失败判定统一放在 `scripts/`，并在 `docs/ci.md` 说明前提、调用和结果位置；Windows / shell 入口复用同一实现，不建立多套逻辑。GitHub Actions 仅在跨平台验证或受保护构建确有需要时使用，只负责触发、环境、权限与调用本地脚本，不在 YAML 中编写独立业务流程；本地验证不得依赖 GitHub Actions 才能运行。
 - 保留其他仓库与用户修改。移动端未验证不得宣称兼容；功能对照中的差距不得称为全部完成。
