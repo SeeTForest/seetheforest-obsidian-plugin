@@ -37,10 +37,19 @@ Build-time dependency retrieval is separate from plugin runtime behavior.
 插件版本与 Atlas 版本独立管理；Atlas 发布或 Blog 回归通过，不等于插件发布或 Obsidian 验收通过。
 制品命名和双版本追溯见 [社区安装制品契约](docs/community-package.md)。
 
-## 当前状态：正式依赖与本机验收通过，尚未社区发行
+## 发行与社区状态
+
+首个发行版本为 **插件 0.1.0 + Atlas 0.1.7**，仅支持桌面 Obsidian 1.11.7 及以上。
+用户已确认当前本机正式包复验通过；GitHub 发行不代表官方社区目录已收录。
+发行入口：[0.1.0 Release](https://github.com/SeeTForest/seetheforest-obsidian-plugin/releases/tag/0.1.0)。
+在正式获目录收录前，可按下文手动安装三个 Release 附件；不要将 GitHub 自动生成的 Source code 压缩包当作安装包。
+全局/局部星图、搜索过滤、选择后阅读及离线运行已提供；移动端、原生 Graph 的完整高级参数面板尚未支持。
+复杂拖动可能需要超过 15 秒归静，未通过缩短计算路径改变物理行为。
+
+以下保留版本与验收过程；过去时段的“未发行”不代表当前 Release 状态。
 
 2026-10-06 当前依赖已升级为私有 [Atlas v0.1.7 Release](https://github.com/SeeTForest/seetheforest-atlas/releases/tag/v0.1.7)，
-Atlas/npm 两锁固定同一签名包，具备宿主 API v1 与选择/阅读分离接口。插件版本仍为 0.1.0，尚未发布社区版本。
+Atlas/npm 两锁固定同一签名包，具备宿主 API v1 与选择/阅读分离接口。插件版本为 0.1.0，官方目录收录状态另行确认。
 用户已验收固定 Vault 的 `.8-initial` 候选；正式包额外修复 Wasm 中的本机路径泄漏，运行源码未变，但字节并不相同。
 新旧包差异及最终验证结果见 [测试记录](docs/validation.md)。随后用户确认关闭 Vault 并批准安装，
 固定 Vault 已更新为正式 Atlas 0.1.7；2026-10-07 用户明确确认“正式包复验通过”，

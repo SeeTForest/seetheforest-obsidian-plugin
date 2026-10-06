@@ -1,7 +1,11 @@
-See the Forest Atlas for Obsidian — local development candidate.
+See the Forest Atlas for Obsidian — third-party license summary.
 
-Atlas is proprietary and remains governed by the bundled ATLAS-LICENSE.txt.
-This project does not grant permission to redistribute Atlas or publish its source.
+The original Obsidian integration layer is MIT-licensed (see LICENSE).
+Atlas is proprietary. Its license and ATLAS-RUNTIME-PERMISSION.txt are included
+in the readable license banner of main.js, together with third-party notices.
+Accepted Atlas runtime artifacts may be distributed only inside this plugin
+under that permission. Atlas source publication and standalone redistribution
+are not authorized. The combined main.js is not wholly MIT-licensed.
 
 SolidJS — MIT — https://github.com/solidjs/solid/blob/main/LICENSE
 PixiJS — MIT — https://github.com/pixijs/pixijs/blob/dev/LICENSE
@@ -9,4 +13,5 @@ PixiJS — MIT — https://github.com/pixijs/pixijs/blob/dev/LICENSE
 The build generates full copyright and license notices from the exact bundled
 dependency set reported by esbuild. Missing notices fail the build. This file
 is a source-tree summary; the generated runtime notice is included in the package.
-This candidate has not been approved for public distribution or directory listing.
+Publishing a GitHub release does not mean the plugin has been approved for the
+Obsidian Community directory. Directory review and listing are separate steps.

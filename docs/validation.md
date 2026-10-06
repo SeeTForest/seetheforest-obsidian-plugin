@@ -472,3 +472,18 @@ Blog 侧由原 Atlas/Blog 负责人对同一包独立回归，不能用插件静
 - 对本地可达 Git 历史的 10 次提交、135 个 blob 做了有限的路径/制品文件名、私钥标记和 GitHub Token
   模式扫描，未命中。该扫描不是完整源码/隐私审查，也不是公开批准；仓库仍为 Private。
 - 本轮改动尚未 commit/push；未公开仓库、授予官方源码读取权限、发布插件或提交社区，未覆盖测试 Vault。
+
+### 同日：公开插件仓库与首次发行准备
+
+- 后续用户授权 commit + push，保存为 `46e8b29`；本地可构建输入与通过的 full CI 共 51 文件摘要匹配，
+  三文件及 ZIP 保持用户已验收字节。该提交的 Windows / Ubuntu 托管源码检查也通过。
+- 用户随后条件授权公开现有插件仓库。检查 11 次可达提交、147 个历史 blob，并比对 Atlas 历史 191 个源码 blob；
+  未发现 Atlas 实现源码、二进制包、Source Map 或凭据标记。80-token 相似片段只命中 GraphNode 类型契约，
+  已独立核对属于签名发行包接口声明，不是物理/渲染实现。另检查 5 次源码 CI 日志；无 Release、PR、Issue、
+  Actions 制品、Wiki、Discussion 或 Pages。检查不是对未知服务端残留对象的绝对证明。
+- `SeeTForest/seetheforest-obsidian-plugin` 已设 Public，经认证 API 和匿名 API 双重确认；Atlas 仍 Private。
+  证据在 `artifacts/validation/publication-audit-20261007/`，没有重写历史、公开 Atlas 仓库或改变运行代码。
+- 用户明确要求执行插件 0.1.0 三文件发行并推进社区提交。本次修正旧第三方许可摘要和发行说明，不修改实际
+  LICENSE、分发授权、运行代码或依赖锁。将从干净提交执行完整本地 CI，只有与已验收三文件摘要完全一致才发布。
+- 社区表单需要 Obsidian 账号登录、GitHub 连接、选择 Owner 并确认开发者政策及持续维护承诺；当前没有
+  可操作登录表单的浏览器工具，不能替用户完成这一步，也不读取本机浏览器凭据或伪造提交成功。
