@@ -45,25 +45,27 @@ export default class ForestPlugin extends Plugin {
   private alive = true;
   private fingerprint = "";
   async onload(): Promise<void> {
-    const data = await this.loadData();
+    const loaded: unknown = await this.loadData();
+    const data = loaded && typeof loaded === "object" ? loaded as Record<string, unknown> : {};
+    if (!this.alive) return;
     this.settings = normalizeSettings(data?.settings);
     this.ids = new Identities(data?.identities);
     this.registerView(VIEW, (leaf) => new ForestView(leaf, this));
     this.addRibbonIcon("network", "打开 Atlas 全局星图", () => {
-      void this.open(false);
+      this.runAction(() => this.open(false));
     });
     this.addCommand({
       id: "open-global",
       name: "打开全局星图",
       callback: () => {
-        void this.open(false);
+        this.runAction(() => this.open(false));
       },
     });
     this.addCommand({
       id: "open-local",
       name: "打开局部星图",
       callback: () => {
-        void this.open(true);
+        this.runAction(() => this.open(true));
       },
     });
     this.addCommand({
@@ -129,8 +131,10 @@ export default class ForestPlugin extends Plugin {
     );
     try {
       await this.runtime.load();
+      if (!this.alive) return;
       this.ready = true;
     } catch (error) {
+      if (!this.alive) return;
       this.error = error instanceof Error ? error.message : "Atlas 加载失败";
       new Notice(this.error);
     }
@@ -140,10 +144,23 @@ export default class ForestPlugin extends Plugin {
   }
   onunload(): void {
     this.alive = false;
+    this.ready = false;
     this.job?.dispose();
     this.views().forEach((view) => view.release());
-    this.app.workspace.detachLeavesOfType(VIEW);
+    // Obsidian owns registered-view teardown and workspace restoration.
+    // Detaching here would remove the user's tabs on reload/update.
     this.runtime.dispose();
+  }
+  runAction(action: () => Promise<void>): void {
+    if (!this.alive) return;
+    void (async () => {
+      try {
+        await action();
+      } catch {
+        if (this.alive)
+          new Notice("无法打开目标，请检查笔记是否存在以及工作区是否可用，然后重试。");
+      }
+    })();
   }
   views(): ForestView[] {
     return this.app.workspace
@@ -155,17 +172,21 @@ export default class ForestPlugin extends Plugin {
     if (this.alive && this.ready) this.job?.request();
   }
   persist(): Promise<void> {
+    if (!this.alive) return Promise.resolve();
     const data = {
       schemaVersion: 1,
       settings: structuredClone(this.settings),
       identities: { ...this.ids.paths },
     };
+    // Preserve writes explicitly requested before unload; reject only new
+    // requests after unload, rather than silently dropping a user's setting.
     this.saving = this.saving.catch(() => {}).then(() => this.saveData(data));
     return this.saving.catch(() => {
-      new Notice("见林设置保存失败，请检查笔记库写入权限。");
+      if (this.alive) new Notice("见林设置保存失败，请检查笔记库写入权限。");
     });
   }
   async open(local: boolean): Promise<void> {
+    if (!this.alive) return;
     const path = this.app.workspace.getActiveFile()?.path;
     const leaf = local
       ? (this.app.workspace.getRightLeaf(false) ??
@@ -176,7 +197,7 @@ export default class ForestPlugin extends Plugin {
       active: true,
       state: { local, centerPath: path },
     });
-    await this.app.workspace.revealLeaf(leaf);
+    if (this.alive) await this.app.workspace.revealLeaf(leaf);
   }
 }
 
@@ -233,7 +254,7 @@ class ForestView extends ItemView {
     this.syncControls = [];
     this.contentEl.addClass("stf-view");
     const tools = this.contentEl.createDiv({ cls: "stf-toolbar" });
-    const scope = tools.createEl("span", { cls: "stf-scope" });
+    const scope = tools.createSpan({ cls: "stf-scope" });
     this.syncControls.push(() => {
       scope.setText(this.local ? "局部星图" : "全局星图");
     });
@@ -436,7 +457,7 @@ class ForestView extends ItemView {
       const groupTests = this.plugin.settings.groups
         .filter((g) => g.query.trim())
         .map((g) => ({ ...g, test: compileSearch(g.query) }));
-      const colors: Record<string, string> = Object.create(null);
+      const colors = Object.create(null) as Record<string, string>;
       for (const node of graph.nodes) {
         const entry = this.plugin.index.entries.get(node.id);
         const group = entry && groupTests.find((g) => g.test(entry));
@@ -468,7 +489,7 @@ class ForestView extends ItemView {
                 prepared,
                 colors,
                 (node, event) => {
-                  void this.openNode(node.id, event);
+                  this.plugin.runAction(() => this.openNode(node.id, event));
                 },
                 (node, event) => this.contextMenu(node, event),
               );
@@ -524,29 +545,41 @@ class ForestView extends ItemView {
             "aria-label": `${node.title} · ${context}`,
           },
         });
-        button.createEl("span", { cls: "stf-note-title", text: node.title });
-        button.createEl("span", { cls: "stf-note-path", text: context });
+        button.createSpan({ cls: "stf-note-title", text: node.title });
+        button.createSpan({ cls: "stf-note-path", text: context });
         button.addEventListener("click", (event) => {
-          void this.openNode(node.id, event);
+          this.plugin.runAction(() => this.openNode(node.id, event));
         });
         button.addEventListener("contextmenu", (event) => {
           event.preventDefault();
           this.contextMenu(node, event);
+        });
+        button.addEventListener("keydown", (event) => {
+          if (event.key === "ContextMenu" || (event.key === "F10" && event.shiftKey)) {
+            event.preventDefault();
+            event.stopPropagation();
+            this.contextMenu(node, event, button);
+          }
         });
       }
     } catch (error) {
       this.text.setText(error instanceof Error ? error.message : "列表不可用");
     }
   }
-  private contextMenu(node: GraphNode, event: MouseEvent): void {
+  private contextMenu(
+    node: GraphNode,
+    event: MouseEvent | KeyboardEvent,
+    anchor?: HTMLElement,
+  ): void {
+    const target = this.plugin.index?.targets.get(node.id);
+    if (!target) return;
     const menu = new Menu();
     menu.addItem((item) =>
-      item.setTitle("打开笔记").onClick(() => {
-        void this.openNode(node.id, event);
+      item.setTitle(target.kind === "tag" ? "筛选此标签" : target.kind === "unresolved" ? "打开未解析链接…" : "打开笔记").onClick(() => {
+        this.plugin.runAction(() => this.openNode(node.id, event));
       }),
     );
-    const target = this.plugin.index?.targets.get(node.id);
-    if (target?.kind === "file")
+    if (target.kind === "file") {
       menu.addItem((item) =>
         item.setTitle("在此查看局部关系").onClick(() => {
           this.local = true;
@@ -555,7 +588,14 @@ class ForestView extends ItemView {
           this.app.workspace.requestSaveLayout();
         }),
       );
-    menu.showAtMouseEvent(event);
+      const file = this.app.vault.getAbstractFileByPath(target.path);
+      if (file instanceof TFile)
+        this.app.workspace.trigger("file-menu", menu, file, VIEW, this.leaf);
+    }
+    if (anchor) {
+      const bounds = anchor.getBoundingClientRect();
+      menu.showAtPosition({ x: bounds.left, y: bounds.bottom }, anchor.ownerDocument);
+    } else menu.showAtMouseEvent(event as MouseEvent);
   }
   private async openNode(
     id: string,
@@ -569,11 +609,11 @@ class ForestView extends ItemView {
     }
     if (target.kind === "unresolved") {
       new MissingNoteModal(this.app, target, () => {
-        void this.app.workspace.openLinkText(
+        this.plugin.runAction(() => this.app.workspace.openLinkText(
           target.link,
           target.source,
           Keymap.isModEvent(event) || "tab",
-        );
+        ));
       }).open();
       return;
     }
@@ -656,7 +696,7 @@ class ForestSettings extends PluginSettingTab {
             this.plugin.refresh();
           }),
       );
-    this.containerEl.createEl("h3", { text: "颜色分组（第一个匹配条件优先）" });
+    new Setting(this.containerEl).setName("颜色分组（第一个匹配条件优先）").setHeading();
     this.plugin.settings.groups.forEach((group, index) => {
       new Setting(this.containerEl)
         .setName(`分组 ${index + 1}`)

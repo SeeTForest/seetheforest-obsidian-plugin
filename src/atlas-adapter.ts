@@ -13,7 +13,7 @@ import {
 declare const __ATLAS_ASSETS__: EmbeddedRuntimeAssets;
 interface HostRuntime {
   ATLAS_HOST_API_VERSION: number;
-  KnowledgeAtlas(props: {
+  KnowledgeAtlas(this: void, props: {
     initialView: AtlasView;
     graph: ContentGraph;
     layoutSeed: ForestLayoutSeed[];
@@ -80,7 +80,7 @@ export class AtlasRuntime {
         reject(new Error("布局计算超时，请缩小可见范围后重试。"));
       }, 120000);
       signal.addEventListener("abort", abort, { once: true });
-      worker.onmessage = (event) => {
+      worker.onmessage = (event: MessageEvent<{ error?: string; view: AtlasView; seed: ForestLayoutSeed[] }>) => {
         cleanup();
         if (event.data.error) reject(new Error(event.data.error));
         else resolve(event.data);
@@ -93,7 +93,7 @@ export class AtlasRuntime {
         worker.postMessage(graph);
       } catch (error) {
         cleanup();
-        reject(error);
+        reject(error instanceof Error ? error : new Error("Atlas 布局消息发送失败。"));
       }
     });
   }

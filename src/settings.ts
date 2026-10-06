@@ -46,8 +46,9 @@ export function normalizeSettings(input: unknown): Settings {
     );
   if (Array.isArray(source.groups))
     result.groups = source.groups.filter(
-      (x): x is Settings["groups"][number] =>
-        x && typeof x.query === "string" && /^#[0-9a-f]{6}$/i.test(x.color),
+      (x: unknown): x is Settings["groups"][number] =>
+        !!x && typeof x === "object" && "query" in x && "color" in x &&
+        typeof x.query === "string" && typeof x.color === "string" && /^#[0-9a-f]{6}$/i.test(x.color),
     );
   return result;
 }

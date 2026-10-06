@@ -8,7 +8,7 @@ import {
 } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
-import { verifyAtlas, hash } from "./atlas-verification.mjs";
+import { verifyAtlas, verifyHostApi, hash } from "./atlas-verification.mjs";
 import { runtimeNotices } from "./runtime-notices.mjs";
 import { COMMUNITY_FILES, embeddedAssetBytes } from "./package-validation.mjs";
 const root = fileURLToPath(new URL("../", import.meta.url));
@@ -21,19 +21,7 @@ const verified = await verifyAtlas(
   ),
   lock,
 );
-const types = verified.read("types/solid.d.ts").toString();
-if (
-  !types.includes("ATLAS_HOST_API_VERSION") ||
-  !types.includes("runtimeAssets?:") ||
-  !types.includes("host?:")
-)
-  throw Error(
-    "Atlas signed baseline has no native host API v1. A reviewed, signed upstream release is required; refusing an unusable plugin package.",
-  );
-if (!types.includes("nodeActivation?"))
-  throw Error(
-    "Atlas signed release lacks host.nodeActivation. A signed select-before-read candidate is required; refusing conflicting node navigation.",
-  );
+verifyHostApi(verified);
 // Check that bundling consumes exactly the independently verified package.
 for (const [name, digest] of Object.entries(verified.protection.files)) {
   if (
@@ -115,6 +103,9 @@ const mainBuild = await build({
   loader: { ".css": "empty" },
 });
 const notices =
+  "Plugin integration: seetheforest-obsidian-plugin\n" +
+  (await readFile(path.join(root, "LICENSE"), "utf8")) +
+  "\n\nAtlas proprietary component:\n" +
   verified.read("LICENSE").toString() +
   "\n\n" +
   (await runtimeNotices(root, [layoutBuild.metafile, mainBuild.metafile]));

@@ -1,0 +1,43 @@
+name: Plugin protected build (manual, no publication)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: plugin-protected-build
+  cancel-in-progress: false
+
+jobs:
+  protected:
+    # Never execute fork/PR code with release access. Restrict the Environment
+    # to main and require reviewers in repository settings as well.
+    if: github.ref == 'refs/heads/main'
+    name: Protected / ${{ matrix.os }}
+    environment: atlas-ci
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Fetch and verify the exact locked Atlas Release
+        env:
+          ATLAS_CI_ENABLED: ${{ vars.ATLAS_CI_ENABLED }}
+          ATLAS_RELEASE_REPOSITORY: ${{ vars.ATLAS_RELEASE_REPOSITORY }}
+          ATLAS_RELEASE_TAG: ${{ vars.ATLAS_RELEASE_TAG }}
+          GH_TOKEN: ${{ secrets.ATLAS_RELEASE_READ_TOKEN }}
+        run: node scripts/fetch-atlas.mjs
+      - name: Full isolated build, runtime checks and ZIP validation
+        run: npm run ci:full
+      # Deliberately no upload-artifact, dependency cache, release or deployment.

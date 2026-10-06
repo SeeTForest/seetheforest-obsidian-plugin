@@ -1,9 +1,7 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
+import path from "node:path";
 import { performance } from "node:perf_hooks";
-import {
-  selectForestAtlasView,
-  compileForestLayoutSeed,
-} from "@seetheforest/atlas";
 import {
   buildGraph,
   Identities,
@@ -11,6 +9,14 @@ import {
   type Snapshot,
 } from "../src/graph.ts";
 import { DEFAULTS } from "../src/settings.ts";
+const root = fileURLToPath(new URL("../", import.meta.url));
+const lock = JSON.parse(await readFile(path.join(root, "vendor/atlas.lock.json"), "utf8"));
+const { verifyAtlas, hash } = await import(new URL("./atlas-verification.mjs", import.meta.url).href);
+const verified = await verifyAtlas(...["atlas.tgz", "atlas.sig", "atlas-public.pem"].map((name) => path.join(root, "vendor", name)), lock);
+for (const [name, digest] of Object.entries(verified.protection.files))
+  if (hash(await readFile(path.join(root, "node_modules/@seetheforest/atlas", name))) !== digest)
+    throw Error("Benchmark installed Atlas differs from the verified input");
+const { selectForestAtlasView, compileForestLayoutSeed } = await import("@seetheforest/atlas");
 const rows = [];
 for (const size of [50, 500, 4096]) {
   const snapshot: Snapshot = {
@@ -54,13 +60,14 @@ for (const size of [50, 500, 4096]) {
   rows.push(row);
   console.log(JSON.stringify(row));
 }
-await mkdir("outputs", { recursive: true });
+await mkdir(path.join(root, "outputs"), { recursive: true });
 await writeFile(
-  "outputs/synthetic-performance.json",
+  path.join(root, "outputs/synthetic-performance.json"),
   JSON.stringify(
     {
-      environment:
-        "Node 24, verified Atlas 0.1.6 data API; not Obsidian, no GPU/frame-rate claim",
+      environment: { node: process.version, platform: process.platform },
+      atlas: { version: lock.version, sha256: lock.sha256 },
+      scope: "Synthetic data API measurements; not Obsidian, no GPU/frame-rate or large-Vault acceptance claim",
       rows,
     },
     null,

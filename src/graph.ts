@@ -56,7 +56,7 @@ export interface IndexedGraph {
 }
 
 export class Identities {
-  readonly paths: Record<string, string> = Object.create(null);
+  readonly paths: Record<string, string> = Object.create(null) as Record<string, string>;
   constructor(
     saved: unknown = {},
     private makeId: () => string = () => crypto.randomUUID(),

@@ -16,6 +16,8 @@ class ElementDouble {
   hidden = false;
   attributes: Record<string, string> = {};
   parentElement?: ElementDouble;
+  ownerDocument = {};
+  getBoundingClientRect() { return { left: 20, bottom: 80 }; }
   constructor(
     public tag = "div",
     public cls = "",
@@ -35,6 +37,9 @@ class ElementDouble {
   }
   createDiv(options: { cls?: string } = {}) {
     return this.createEl("div", options);
+  }
+  createSpan(options: { cls?: string; text?: string } = {}) {
+    return this.createEl("span", options);
   }
   createEl(
     tag: string,
@@ -155,6 +160,22 @@ class RuntimeDouble {
 class FileDouble {
   constructor(public path: string) {}
 }
+class MenuDouble {
+  static opened: MenuDouble[] = [];
+  items: Array<{ title: string; click?: () => void }> = [];
+  position?: unknown;
+  document?: unknown;
+  addItem(callback: (item: any) => void) {
+    const item = { title: "", click: undefined as (() => void) | undefined,
+      setTitle(title: string) { this.title = title; return this; },
+      onClick(click: () => void) { this.click = click; return this; } };
+    callback(item);
+    this.items.push(item);
+    return this;
+  }
+  showAtMouseEvent(event: unknown) { this.position = event; MenuDouble.opened.push(this); }
+  showAtPosition(position: unknown, doc: unknown) { this.position = position; this.document = doc; MenuDouble.opened.push(this); }
+}
 const snapshot: Snapshot = {
   files: [
     {
@@ -178,14 +199,17 @@ const bundled = await build({
   target: "node24",
   external: ["obsidian", "./atlas-adapter", "./vault-adapter"],
 });
-async function fixture() {
+async function fixture(options: { loadData?: () => Promise<unknown>; runtimeLoad?: () => Promise<void>; beforeLoad?: (plugin: any) => void } = {}) {
   const leaves: any[] = [];
   const reads: boolean[] = [];
+  const notices: string[] = [];
+  const menuEvents: unknown[][] = [];
   let layoutSaves = 0;
   const app = {
     workspace: {
       getLeavesOfType: () => leaves,
       on: () => ({}),
+      trigger: (...args: unknown[]) => { menuEvents.push(args); },
       onLayoutReady: () => {},
       requestSaveLayout: () => {
         layoutSaves++;
@@ -193,7 +217,7 @@ async function fixture() {
       detachLeavesOfType: () => {},
     },
     metadataCache: { on: () => ({}) },
-    vault: { on: () => ({}) },
+    vault: { on: () => ({}), getAbstractFileByPath: (path: string) => new FileDouble(path) },
   };
   const host = {
     Plugin: PluginDouble,
@@ -205,9 +229,9 @@ async function fixture() {
       isModEvent: (event: { ctrlKey?: boolean }) =>
         event.ctrlKey ? "tab" : false,
     },
-    Notice: class {},
+    Notice: class { constructor(message: string) { notices.push(message); } },
     Modal: class {},
-    Menu: class {},
+    Menu: MenuDouble,
   };
   const module = { exports: {} as { default?: any } };
   const requireDouble = (id: string) => {
@@ -228,6 +252,9 @@ async function fixture() {
     module.exports,
   );
   const plugin = new module.exports.default(app);
+  if (options.loadData) plugin.loadData = options.loadData;
+  if (options.runtimeLoad) plugin.runtime.load = options.runtimeLoad;
+  options.beforeLoad?.(plugin);
   await plugin.onload();
   plugin.index = buildGraph(snapshot, plugin.ids);
   async function view(state: Record<string, unknown> = {}) {
@@ -238,7 +265,7 @@ async function fixture() {
     await leaf.view.setState(state, {});
     return leaf.view;
   }
-  return { plugin, view, reads, layoutSaves: () => layoutSaves };
+  return { plugin, view, reads, notices, menuEvents, layoutSaves: () => layoutSaves };
 }
 const tick = () => new Promise((resolve) => setTimeout(resolve, 260));
 const search = (view: any): ElementDouble =>
@@ -249,6 +276,104 @@ const control = (view: any, name: string): ControlDouble =>
   filters(view)
     .find((el) => el.settings.has(name))!
     .settings.get(name)!;
+
+test("keyboard note menu uses the focused row's document and file-menu public event", async () => {
+  const f = await fixture();
+  try {
+    const view = await f.view();
+    const button = view.contentEl.find((el: ElementDouble) => el.cls === "stf-note-link")!;
+    let prevented = 0;
+    button.events.get("keydown")({ key: "F10", shiftKey: true,
+      preventDefault: () => prevented++, stopPropagation: () => prevented++ });
+    const menu = MenuDouble.opened.at(-1)!;
+    assert.equal(prevented, 2);
+    assert.deepEqual(menu.position, { x: 20, y: 80 });
+    assert.equal(menu.document, button.ownerDocument);
+    assert.equal(menu.items[0]!.title, "打开笔记");
+    assert.equal(f.menuEvents[0]![0], "file-menu");
+    assert.equal((f.menuEvents[0]![2] as FileDouble).path, "A.md");
+    assert.equal(f.menuEvents[0]![3], "seetheforest-atlas");
+    assert.equal(f.menuEvents[0]![4], view.leaf);
+    menu.items[1]!.click!();
+    assert.equal(view.getState().centerPath, "A.md");
+    assert.equal(view.getState().local, true);
+  } finally { f.plugin.onunload(); }
+});
+
+test("tag and unresolved menus are labelled honestly and do not emit a file menu", async () => {
+  const f = await fixture();
+  try {
+    const view = await f.view();
+    for (const [target, title] of [
+      [{ kind: "tag", tag: "#测试" }, "筛选此标签"],
+      [{ kind: "unresolved", source: "A.md", link: "Missing" }, "打开未解析链接…"],
+    ] as const) {
+      f.plugin.index.targets.set("menu-test", target);
+      view.contextMenu({ id: "menu-test" }, {});
+      assert.equal(MenuDouble.opened.at(-1)!.items[0]!.title, title);
+      assert.equal(MenuDouble.opened.at(-1)!.items.length, 1);
+    }
+    assert.equal(f.menuEvents.length, 0);
+  } finally { f.plugin.onunload(); }
+});
+
+test("failed navigation reports a safe notice instead of an unhandled rejection", async () => {
+  const f = await fixture();
+  try {
+    f.plugin.runAction(async () => { throw Error("private-note-path"); });
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    assert.equal(f.notices.length, 1);
+    assert.match(f.notices[0]!, /无法打开目标/);
+    assert.doesNotMatch(f.notices[0]!, /private-note-path/);
+  } finally { f.plugin.onunload(); }
+});
+
+test("unload during startup does not resurrect the plugin or register late views", async () => {
+  for (const phase of ["data", "runtime"]) {
+    let instance: any;
+    const stop = async () => { instance.onunload(); return undefined; };
+    const f = await fixture({ beforeLoad: (plugin) => { instance = plugin; },
+      ...(phase === "data" ? { loadData: stop } : { runtimeLoad: stop }) });
+    assert.equal(f.plugin.ready, false);
+    if (phase === "data") assert.equal(f.plugin.factory, undefined);
+    let calls = 0;
+    f.plugin.runAction(async () => { calls++; });
+    await f.plugin.persist();
+    assert.equal(calls, 0);
+    assert.equal(f.plugin.saved.length, 0);
+  }
+});
+
+test("unload preserves requested settings writes but rejects new save requests", async () => {
+  const f = await fixture();
+  let finish!: () => void;
+  let saves = 0;
+  f.plugin.saveData = () => {
+    saves++;
+    return saves === 1 ? new Promise<void>((resolve) => { finish = resolve; }) : Promise.resolve();
+  };
+  const first = f.plugin.persist();
+  await new Promise<void>((resolve) => setImmediate(resolve));
+  const second = f.plugin.persist();
+  f.plugin.onunload();
+  await f.plugin.persist();
+  finish();
+  await Promise.all([first, second]);
+  assert.equal(saves, 2);
+});
+
+test("unload releases the view but does not detach the user's workspace leaves", async () => {
+  const f = await fixture();
+  const view = await f.view();
+  let releases = 0;
+  let detaches = 0;
+  view.release = () => { releases++; };
+  f.plugin.app.workspace.detachLeavesOfType = () => { detaches++; };
+  f.plugin.onunload();
+  assert.equal(releases, 1);
+  assert.equal(detaches, 0);
+  assert.equal(f.plugin.ready, false);
+});
 
 test("explicit reading opens the exact note in a reusable reader without replacing the graph", async () => {
   const f = await fixture();

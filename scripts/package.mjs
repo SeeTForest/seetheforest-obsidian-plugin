@@ -1,9 +1,9 @@
-import { execFileSync } from "node:child_process";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { hash } from "./atlas-verification.mjs";
-import { verifyRuntimeDirectory } from "./package-validation.mjs";
+import { COMMUNITY_FILES, verifyRuntimeDirectory } from "./package-validation.mjs";
+import { createArchive, verifyArchive } from "./package-archive.mjs";
 const root = fileURLToPath(new URL("../", import.meta.url));
 const integrity = JSON.parse(
   await readFile(path.join(root, "outputs/package-integrity.json"), "utf8"),
@@ -22,11 +22,11 @@ const file = path.join(
   "outputs",
   `seetheforest-atlas-obsidian-${manifest.version}.zip`,
 );
-execFileSync(
-  "tar",
-  ["-a", "-cf", file, "-C", path.join(root, "dist"), "seetheforest-atlas"],
-  { windowsHide: true },
-);
+const files = Object.fromEntries(await Promise.all(COMMUNITY_FILES.map(async (name) => [
+  name, await readFile(path.join(root, "dist/seetheforest-atlas", name)),
+])));
+await writeFile(file, createArchive(files, integrity.files));
+verifyArchive(await readFile(file), integrity.files);
 const digest = hash(await readFile(file));
 await writeFile(`${file}.sha256`, `${digest}  ${path.basename(file)}\n`);
 console.log(`Created ${path.basename(file)} SHA-256 ${digest}`);

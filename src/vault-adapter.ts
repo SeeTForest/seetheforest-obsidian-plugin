@@ -9,7 +9,7 @@ export async function readSnapshot(
 ): Promise<Snapshot> {
   const files = app.vault.getFiles();
   const entries: VaultEntry[] = [];
-  const linkKinds: NonNullable<Snapshot["linkKinds"]> = Object.create(null);
+  const linkKinds = Object.create(null) as NonNullable<Snapshot["linkKinds"]>;
   for (let offset = 0; offset < files.length; offset += 32) {
     if (cancelled()) throw new Error("snapshot-cancelled");
     const batch = await Promise.all(

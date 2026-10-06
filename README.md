@@ -39,8 +39,11 @@
 Worker 随 `main.js` 内嵌，运行时仅创建本地 Blob，不读取额外 `assets/` 或下载依赖。
 三文件隔离验证见本仓库 `artifacts/validation/obsidian-community-package-20260930/`，不能视为已经获市场审核或真实实装通过。
 
-目标是覆盖原生 Graph 的功能并保留 Atlas 体验。当前差距详见
-[原生功能对照](docs/native-graph-parity.md)；这里没有把功能全集缩减成已经完成的 MVP。
+总体目标是扩展原生 Graph 能力并保留 Atlas 体验。2026-10-06 用户明确物理/数学正确性与一致性、视觉与交互为核心，
+其他功能由工程判断安排。首版优先可靠的探索、阅读与离线使用；高级搜索、力/显示滑块、方向箭头和创建时间动画
+安排后续，不以这些缺口为由降低 Atlas 核心验收要求。当前差距详见 [原生功能对照](docs/native-graph-parity.md)。
+
+生产交付的剩余门槛、固定 Vault 验收步骤与官方社区提交路线见 [生产交付清单](docs/release-readiness.md)。
 
 ## 工程职责
 
@@ -61,6 +64,10 @@ Worker 随 `main.js` 内嵌，运行时仅创建本地 Blob，不读取额外 `a
 完整边界见 [数据与运行架构](docs/architecture.md)，验证事实见 [测试记录](docs/validation.md)。
 
 ## 本地开发
+
+重复验证已统一为 `npm run ci:source`（不需要 Atlas）和 `npm run ci:full`（验签的完整隔离构建）。
+GitHub Actions 分为公共源码 PR 检查和受保护的手动构建，详见 [CI 与配置说明](docs/ci.md)。
+源码检查通过不表示完整兼容验收通过；当前正式 Atlas 0.1.6 会被完整管线正确拦截。
 
 Node.js 24，npm lock 固定依赖。先取得已批准的 Atlas 包、分离签名和可信公钥，
 更新 `vendor/atlas.lock.json` 为同一发行事实；不要凭包的版本字符串信任它。
@@ -140,7 +147,8 @@ ZIP 位于其中 `consumer/outputs/seetheforest-atlas-obsidian-0.1.0.zip`。这�
 不含遥测、云上传、远程 CDN、自更新、账号、支付或 AI 整理功能。
 只持久化必要设置和路径→稳定 ID；正文及可重建图不保存到插件数据或发行包。
 Atlas 是闭源专有组件；插件的目标分发渠道是 Obsidian 社区插件市场。
-正式发布前仍需确认插件许可、Atlas 再分发许可及市场审核要求，不能通过公开 Atlas 源码绕过该边界。
+2026-10-05 用户明确插件适配层采用 MIT，见根 `LICENSE`；此许可不覆盖 Atlas 与其他第三方代码。
+构建包同时保留各自许可。正式发布前仍需确认 Atlas 再分发许可及市场审核要求，不能通过公开 Atlas 源码绕过该边界。
 Obsidian 社区目录禁止以混淆隐藏用途，闭源代码个案审查；不能承诺已可上架。
 官方来源与核验日期见 [功能对照](docs/native-graph-parity.md)。
 
