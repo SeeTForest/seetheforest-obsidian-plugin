@@ -54,8 +54,7 @@ export async function verifyRuntimeDirectory(dist, integrity) {
     throw Error("Bundled license notices missing or changed");
   for (const [role, bytes] of Object.entries(assets))
     if (
-      role !== "wasm" &&
-      /sourceMappingURL|E:[\\/]0-Notes|my-notes-private|BEGIN PRIVATE KEY/.test(
+      /sourceMappingURL|E:[\\/]0-Notes|[A-Za-z]:[\\/]Users[\\/]|\/(?:home|Users)\/|my-notes-private|BEGIN PRIVATE KEY/.test(
         bytes.toString(),
       )
     )

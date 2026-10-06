@@ -41,7 +41,9 @@ export async function checkContract(root) {
   assert.equal(versions[pkg.version], manifest.minAppVersion);
   assert.equal(manifest.isDesktopOnly, true, "Mobile requires separate acceptance before changing this guard");
   assert.equal(pkg.license, "MIT");
+  assert.equal(pkg.private, true, "Plugin is distributed through Obsidian releases, not npm publication");
   assert.equal(lock.packages[""].license, "MIT");
+  assert.equal(lock.packages[`node_modules/${ATLAS}`].license, "SEE LICENSE IN LICENSE", "Atlas must retain its separate proprietary license, not inherit integration MIT");
   assert.match(await readFile(path.join(root, "LICENSE"), "utf8"), /Atlas remains\s+proprietary/);
   const permission = await readFile(path.join(root, "ATLAS-RUNTIME-PERMISSION.txt"), "utf8");
   assert.match(permission, /only as part of this plugin/);

@@ -1,6 +1,7 @@
 # 从开发候选到社区可安装版本
 
-更新：2026-10-06。当前结论：**仍是开发候选，尚不能正式发行**。本文件是执行清单，不是验收结果。
+更新：2026-10-07。当前结论：**正式依赖、完整本地 CI 和用户本机复验已通过；尚未完成社区审核与发行**。
+本文件汇总状态与剩余执行项，验收来源及制品身份见 `validation.md`。
 
 ## 剩余工作及顺序
 
@@ -10,8 +11,8 @@
 | Atlas/Blog 兼容 | 最终 `.8` 原矩阵 17 项通过；剩余搜索项经用户批准仅修第 13 例后，独立单次评分 21/21、100% 通过；19 场景、106 行为、历史 raw 8/8 与同期配对 8/8 通过 | 已闭合本轮自动门禁覆盖，但旧矩阵仍保留 17/18；长拖超过 15 秒及旧 22.5 秒观察继续披露，不把自动门禁通过当作全部体验已达标或正式发行授权 |
 | 正式依赖 | Atlas 私有 `v0.1.7` 已发布，来源 `adb7ad0`；插件 Atlas/npm 两锁已升级，可信签名根不变 | 依赖正式化已落实；最终插件 CI 与差异证据见 `validation.md`，不自动升级 Blog/官网 |
 | 首版功能范围 | 用户授权以 Atlas 物理/数学一致性及视觉交互核心优先，其他功能由工程判断安排 | 首版交付可靠全局/局部探索、现有搜索过滤、阅读与离线；高级搜索、力/显示滑块、箭头、创建时间动画留作后续，不假称已支持 |
-| 真实宿主验收 | 用户已确认插件 0.1.0 + Atlas `.8-initial` 验收通过；正式 `0.1.7` 的 Wasm 路径脱敏使 main.js 字节变化，样式/manifest 不变 | 差异已核对，计算等价证据通过；仍需获准关闭 Vault 后安装正式包并做真机复验，不冒称新包已被用户实测 |
-| 闭源审核 | 插件适配层 MIT、Atlas 合格运行制品的插件内免费分发及安装运行授权、受限只读源码审核路线已确认；尚未授予仓库访问 | 与官方确认个案审核及构建核验方式；批准具体仓库权限后才交付审核源码，不擅自公开 Atlas |
+| 真实宿主验收 | 2026-10-07 用户明确“正式包复验通过”：插件 0.1.0 + Atlas 0.1.7；同日三文件仍匹配干净提交 b83e1ee 的构建 | 当前固定 Vault 的用户复验已闭合；不补写未提供的测量数据，不外推其他平台或解禁移动端 |
+| 闭源依赖披露与社区个案判断 | 插件适配层 MIT，Atlas 专有闭源，合格运行制品可随插件免费分发；受限只读审核路线可接受，但尚未授予访问 | 按正常社区提交流程披露，请官方确认需要的材料及构建核验方式；不预设独立前置审批或必须交付整个 Atlas 仓库 |
 | 社区发行 | 尚无本轮发布与目录提交授权 | 清洁源码提交、Release/Tag、公开安装资产、提交审核、社区实际安装/更新验收 |
 
 2026-10-06 用户已授权 Atlas 原负责人：把采样修正纳入版本管理、定稿动态截图方法后进行一次有界完整回归。
@@ -121,9 +122,25 @@ lint 的 warning 与 error 分开报告，不以关闭官方错误规则换取�
 
 ## 官方审核与发布
 
+2026-10-07 口径校正：社区审核是官方目录的准入要求，闭源代码须披露并个案判断；
+公开说明未定义统一、独立的“闭源前置审批”，也未统一要求所有闭源依赖交出全部源码。
+因此将原先笼统的“闭源审核阻塞”收敛为正常提交中的披露与官方待确认事项，不增加自设审批门槛。
+插件适配层的 MIT 与 Atlas 专有许可分别适用；前者不能覆盖随包执行的后者。
+
+2026-10-06 安装正式包后再次只读核对官方下列四份说明：开发者政策、插件提交要求、提交插件、管理条目。
+插件仓库目前仍为 Private 且没有 Release，未更改访问权限或发送审核材料。
+后续拟用插件 Tag **`0.1.0`**（必须与 manifest 完全一致，不使用 Atlas 的 `v0.1.7`），
+发布三个独立资产 `main.js` / `manifest.json` / `styles.css`，ZIP 仅作便利下载。
+已验证资产来自 `artifacts/validation/ci/full-12ftNh/workspace/dist/seetheforest-atlas/`；
+Atlas 包和插件安装文件是两层不同的制品，不能把私有 Atlas Release 当成用户可安装的插件 Release。
+
+下一外部步骤仍有明确边界：需要先决定公开的插件发行仓库，审查其拟公开内容与历史，再获准公开或新建。
+Atlas 源码仓库保持 Private；官方 App 的具体可读仓库及依赖构建输入交付须另行确认。
+目前的预沟通草稿未发送，不把用户接受审核路线等同于已授权第三方访问整个源码仓库。
+
 按 2026-10-06 官方文档，社区目录支持审核源代码与构建一致性，也提供已有条目的 Review branch 预检查。
 私有源码可通过官方 GitHub App 的受限读取路线接受审核，但此能力不等于自动批准闭源第三方依赖。
-本插件的 `file:vendor/atlas.tgz` 是不入 Git 的构建输入：必须事先与官方明确如何取得和验证该依赖以及复现构建，
+本插件的 `file:vendor/atlas.tgz` 是不入 Git 的构建输入：提交时须向官方说明，并确认如何取得和验证该依赖以及复现构建，
 不能期待公开源码仓库克隆后无需额外输入就能安装，也不能把私有读取 Token 写进仓库供审核器使用。
 
 2026-10-06 用户已接受向官方提供受限、只读源码审核的路线；这不是已授予访问，也不是对整个 Atlas 仓库、
@@ -143,23 +160,40 @@ Atlas 基线与 `.5-selection` 内 LICENSE 均默认不授予复制/分发权，
 > The three-file plugin bundles its Worker and Wasm resources for offline use, with license notices retained.
 > It has no telemetry, accounts, remote runtime downloads or self-updates.
 >
-> We can arrange restricted read-only source review, subject to approval of the exact repository and access scope.
-> Before release, please confirm whether this combination is eligible for case-by-case review; what proprietary
-> source scope you require; how your build verifier should receive a pinned signed dependency that is not in the
-> public integration repository; and how protected JavaScript and Wasm should be presented for review without
-> hiding their purpose. We will not provide credentials in the repository or assume approval from local tests.
+> The rights holder has authorized distribution of the accepted Atlas runtime inside this plugin.
+> As part of the normal community submission, please confirm what evidence you need for this closed-source
+> dependency and how your build verifier should receive its pinned, signed build input.
+> If source access is necessary, we can discuss restricted read-only access with an explicitly approved scope.
+> We do not assume that a separate approval process or access to the entire Atlas repository is required.
+> JavaScript minification and bundled Wasm are disclosed; no credentials will be placed in the repository.
 
 官方受限源码审核机制并不自动说明能跨仓库读取某个私有依赖，不能自行设计绕过扫描的安装步骤。
-需由官方确认依赖提供方式，再准备与最终发布源码和制品对应的审核材料。
+依赖交付方式依官方反馈确定；当前先准备与已验收源码、制品对应的披露、许可和构建说明，不擅自提供源码权限。
+
+### 首次提交字段（本地草稿，未发送）
+
+| 字段 | 拟提交内容 |
+| --- | --- |
+| 名称 / ID | See the Forest Atlas / `seetheforest-atlas` |
+| 插件版本 / Tag | `0.1.0` / `0.1.0` |
+| 简介 | Explore your local notes as an interactive knowledge constellation. |
+| 适用范围 | Desktop only；最低 Obsidian 1.11.7；移动端未验证 |
+| 许可 | 原创插件适配层 MIT；Atlas 专有闭源依赖；第三方许可证分别保留 |
+| 网络与隐私 | 已安装插件无运行时下载、遥测、账号或云上传；笔记不上传；不自动改写笔记，明确阅读未解析链接时仍需用户确认创建 |
+| 分发形式 | 三个独立安装资产，Worker/Wasm 内嵌；不向用户发放独立 Atlas tgz |
+| 费用 | 首版本插件免费，无支付或账号要求 |
+| 发行仓库 / 提交身份 | 由用户确认公开发行仓库及其社区账号或组织；尚未变更仓库可见性 |
+
+官方所需截图只能使用合成或明确获准公开的数据。用户本机验收不等于全平台压力测试，已知长拖限制须保留。
 
 获得明确授权后按顺序执行：
 
 1. 审阅并保存源码；核验拟公开 Git 历史、README、MIT、闭源披露、隐私与未支持项；公开仓库是单独动作。
 2. 先用本地脚本完成最终完整管线并保存精确源码与签名依赖证据；需要托管复核时，再经批准配置 CI Environment、只读制品凭据及分支保护。源码跨平台检查复用相同脚本。
-3. 与官方确认闭源组件再分发和审核路线；只授予经过用户批准的范围，绝不公开私钥。
+3. 准备 README 中的闭源披露、合法分发依据与构建说明，将依赖交付方式列为社区提交中的待确认事项；可预沟通但不将其设为额外强制前置审批。若官方需要访问，只授予用户批准的范围，绝不公开私钥。
 4. 发布同一已验收源码的插件 Tag/Release，上传 `main.js`、`manifest.json`、`styles.css` 三个独立资产。
    ZIP 只是手动安装便利物，不能代替这三个社区安装资产；附版本说明、双版本追溯与已知限制。
-5. 按官方社区目录表单提交，由实际账号/组织认领；截图只能用合成或明确公开内容。
+5. 按官方社区目录表单提交，由实际账号/组织认领；随正常审核处理 Atlas 闭源依赖的个案判断和构建核验反馈，截图只能用合成或明确公开内容。
 6. 处理官方审核反馈；获准后从社区目录实际下载安装并验证更新。审核耗时和通过与否不能预先承诺。
 
 ## 官方依据

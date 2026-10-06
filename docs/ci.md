@@ -160,13 +160,19 @@ npm run ci:full
 进入社区发行还需要逐项完成：
 
 1. 保留 Atlas/Blog 原负责人定义的 `.8` 回归及正式化等价证据；本插件 CI 不重新定义这些用例，路径修复后的包不冒称重跑完整浏览器矩阵。
-2. 固定 Vault 的 `.8` 已获用户验收；最终正式包仍应做真实 Obsidian 复验，覆盖更新、离线及资源释放。原生功能差距见 `native-graph-parity.md`。
+2. 2026-10-07 用户确认固定 Vault 的正式包复验通过，绑定插件 0.1.0 + Atlas 0.1.7 及其三文件摘要；未提供的逐项测量不补写。原生功能差距见 `native-graph-parity.md`。
 3. 正式签名 Release、插件内分发授权和两锁升级已落实；最终构建运行本地完整 CI，证据见 `validation.md`。
-4. Atlas 闭源审核方案与官方审核结论；插件 MIT 不解决闭源组件审查问题。
+4. 正常社区审核中的闭源依赖披露与个案判断；不预设独立前置审批、公开 Atlas 或交出整个源码仓库，具体材料依官方反馈确认。
 5. 明确插件 Release 版本，生成并核验三文件资产及双版本证据；得到发布授权后才创建 Tag/Release、提交社区目录。
 
 CI 回执始终将 Blog、真实 Obsidian、社区审核列为 `not-run`，`releaseAuthorized` 为 false。
 不能仅修改这些字段充当验收；外部验收证据应绑定确切源码、Atlas 包与最终三文件摘要。
+
+2026-10-07 边界校验：contract 同时要求适配层 MIT、Atlas npm 元数据 `SEE LICENSE IN LICENSE`，
+以及防止误发 npm 的 `private: true`，并有许可漂移负例。该标志不代表闭源许可或 GitHub 可见性。
+离线 VM 在已有加载、布局、取消、卸载路径阻止 fetch、XHR、WebSocket、EventSource、sendBeacon、
+Obsidian request/requestUrl；被捕获后吞掉的访问尝试也会使验证失败。它不覆盖未挂载的 DOM/GPU 路径，
+不作为对所有潜在网络行为的形式化证明。内嵌 Wasm 解码后也参与已知私有路径扫描，补充 Base64 负例。
 
 ## 官方依据
 

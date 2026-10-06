@@ -3,6 +3,23 @@
 把当前 Obsidian 笔记库的真实链接网络交给 See the Forest Atlas 显示，在原生工作区中探索并打开笔记。
 不需要见林 Vault 框架、Profile、Codex、网站构建、账号或网络服务。笔记不会被改写或上传。
 
+## 许可与离线运行
+
+**插件适配层 MIT，Atlas 为专有闭源依赖。** MIT 仅覆盖本工程原创的 Obsidian 适配代码，
+不覆盖 `@seetheforest/atlas` 或其他第三方代码，也不表示最终组合的 `main.js` 全部采用 MIT。
+Atlas 获准随本插件免费分发并供用户安装运行，不授予 Atlas 源码公开或单独再分发权。
+各自许可证及分发授权全文随安装文件保留，见 [LICENSE](LICENSE) 与 [Atlas 分发授权](ATLAS-RUNTIME-PERMISSION.txt)。
+
+Atlas、两个 Worker、Wasm 和样式随插件安装包提供；已安装插件在本地离线运行，
+无运行时下载、遥测、CDN、账号或自更新。开发者构建时下载 npm 依赖和签名 Atlas 包，
+以及 Obsidian 自身下载插件安装/更新文件，不属于插件的运行时联网。
+`package.json.private: true` 只用于防止误发 npm；MIT 许可和 GitHub 仓库是否公开是另外两个维度。
+
+English disclosure: The Obsidian integration layer is MIT-licensed. Atlas is a proprietary,
+closed-source dependency bundled with the plugin. Its code is not covered by the integration's MIT license.
+The installed plugin runs offline with bundled Worker/Wasm assets, without runtime downloads or telemetry.
+Build-time dependency retrieval is separate from plugin runtime behavior.
+
 ## 产品名称与工程身份
 
 用户安装的插件展示名是 **See the Forest Atlas**，其构建来源是本仓库
@@ -20,12 +37,14 @@
 插件版本与 Atlas 版本独立管理；Atlas 发布或 Blog 回归通过，不等于插件发布或 Obsidian 验收通过。
 制品命名和双版本追溯见 [社区安装制品契约](docs/community-package.md)。
 
-## 当前状态：可本地测试的开发候选，尚非正式交付
+## 当前状态：正式依赖与本机验收通过，尚未社区发行
 
 2026-10-06 当前依赖已升级为私有 [Atlas v0.1.7 Release](https://github.com/SeeTForest/seetheforest-atlas/releases/tag/v0.1.7)，
 Atlas/npm 两锁固定同一签名包，具备宿主 API v1 与选择/阅读分离接口。插件版本仍为 0.1.0，尚未发布社区版本。
 用户已验收固定 Vault 的 `.8-initial` 候选；正式包额外修复 Wasm 中的本机路径泄漏，运行源码未变，但字节并不相同。
-新旧包差异及最终验证结果见 [测试记录](docs/validation.md)。本轮不覆盖测试 Vault，不以旧包验收冒充正式包真机复验。
+新旧包差异及最终验证结果见 [测试记录](docs/validation.md)。随后用户确认关闭 Vault 并批准安装，
+固定 Vault 已更新为正式 Atlas 0.1.7；2026-10-07 用户明确确认“正式包复验通过”，
+当日只读核对三文件仍匹配 `b83e1ee` 的干净构建。此为当前本机版本的用户验收，不是跨平台覆盖或社区审核结论。
 
 以下按时间保留此前开发过程，旧版阻塞不表示当前依赖状态：
 
@@ -120,9 +139,11 @@ npm run package
 2026-10-05 已将原 Ops 构建目录中的测试 Vault 原样迁入此处；在 Obsidian 中使用“打开文件夹作为仓库”
 选择新位置。后续新增用例、测试笔记、插件设置和工作区状态均在此迭代，不重新复制初始模板。
 
-对应测试候选及来源回执位于本仓库 `artifacts/validation/obsidian-validation-20261005/`，
-ZIP 位于其中 `consumer/outputs/seetheforest-atlas-obsidian-0.1.0.zip`。这是插件 0.1.0 + Atlas
-0.1.7-obsidian.4-gates 的本地候选，不是正式发行。候选按批次保留，Vault 不随批次改变。
+当前安装为插件 0.1.0 + 正式 Atlas 0.1.7，来自干净插件提交 `b83e1ee`。
+构建回执位于 `artifacts/validation/ci/full-12ftNh/receipt.json`，ZIP 位于同目录
+`workspace/outputs/seetheforest-atlas-obsidian-0.1.0.zip`。这不是插件社区发行。
+历史候选按批次保留，Vault 不随批次改变；最新安装及旧三文件备份位于
+`artifacts/validation/formal-atlas-20261006/vault-install/`。
 更新时先关闭该 Vault 或禁用插件，仅替换校验通过的 `main.js`、`manifest.json`、`styles.css`，
 保留插件 `data.json`、其他 `.obsidian` 配置和全部测试笔记。`test-vaults/` 不进入 Git 或发布制品。
 
@@ -145,7 +166,8 @@ ZIP 位于其中 `consumer/outputs/seetheforest-atlas-obsidian-0.1.0.zip`。这�
 当前源码采用“先选择，后阅读”：单击节点或对节点按 Enter/空格只选中并显示 Atlas 详情卡片，不切换笔记标签。
 点击卡片“阅读原文”、文本后备列表中的笔记按钮，或右键“打开笔记”才打开原生阅读标签；
 重复阅读复用该视图的阅读标签，保留星图以便返回。修饰键仅在明确的打开操作中交给 Obsidian `Keymap.isModEvent`。
-此行为需要支持 `host.nodeActivation: "select"` 的新签名 Atlas 包；此前安装的 0.1.7-obsidian.4-gates 候选仍有单击直接打开问题，不能视为已修复。
+此行为需要支持 `host.nodeActivation: "select"` 的签名 Atlas 包；当前正式 0.1.7 已包含该接口。
+历史 0.1.7-obsidian.4-gates 候选仍有单击直接打开问题，不应再用它验证此行为。
 未解析链接在明确的打开操作后先显示确认，再交给 Obsidian 打开或创建。
 加载和索引过程不会创建笔记。标签节点进入标签过滤。
 
@@ -161,7 +183,7 @@ ZIP 位于其中 `consumer/outputs/seetheforest-atlas-obsidian-0.1.0.zip`。这�
 “显示内容”适用于当前面板；“局部探索”的跟随、深度、方向仅在局部图显示，不删除已保存的局部选项。
 笔记列表按行左对齐显示标题及完整路径，区分同名笔记；长文本换行，按钮继续支持键盘、原生打开及右键菜单。
 外层控件跟随 Obsidian 主题；Atlas 内部配色、计算与交互不变。
-当前右侧布局候选和浏览器截图位于 `artifacts/validation/ui-right-sidebar-20261005/`，尚未覆盖固定测试 Vault。
+右侧布局已包含在当前固定 Vault 安装中；早期候选截图保留在 `artifacts/validation/ui-right-sidebar-20261005/`。
 
 ## 隐私与分发
 
@@ -170,8 +192,10 @@ ZIP 位于其中 `consumer/outputs/seetheforest-atlas-obsidian-0.1.0.zip`。这�
 Atlas 是闭源专有组件；插件的目标分发渠道是 Obsidian 社区插件市场。
 2026-10-05 用户明确插件适配层采用 MIT，见根 `LICENSE`；此许可不覆盖 Atlas 与其他第三方代码。
 构建包同时保留各自许可。2026-10-06 已获得通过验收的 Atlas 运行制品随本插件免费分发、供用户安装运行的有限授权，
-见 [Atlas 插件内分发授权](ATLAS-RUNTIME-PERMISSION.txt)。不包含 Atlas 源码公开或单独再分发权；正式发行仍须完成兼容验收及官方审核。
-Obsidian 社区目录禁止以混淆隐藏用途，闭源代码个案审查；不能承诺已可上架。
+见 [Atlas 插件内分发授权](ATLAS-RUNTIME-PERMISSION.txt)。不包含 Atlas 源码公开或单独再分发权。
+经授权的 GitHub 发行与进入官方社区目录是不同步骤；后者仍须符合平台政策并通过审核，本地验收不代表获准上架。
+Obsidian 社区目录要求披露闭源代码并作个案判断，禁止以混淆隐藏用途；不预设另有固定的独立前置审批，
+也不预设必须公开 Atlas 或交出全部源码。所需材料依官方反馈确认；不能承诺已可上架。
 官方来源与核验日期见 [功能对照](docs/native-graph-parity.md)。
 
 打包格式、离线验收边界和后续市场闸门见 [社区安装制品契约](docs/community-package.md)。

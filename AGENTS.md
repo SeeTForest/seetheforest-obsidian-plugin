@@ -10,6 +10,8 @@
 - Blog 默认路径的完整视觉和交互回归是兼容验收硬门槛；类型检查和单元测试不能替代实测。Atlas 源码提交不能触发 Blog/官网依赖自动升级。
 - 必需的通用宿主接口在 Atlas 上游实现并验证。缺少合格制品时构建必须失败，不以替代图冒充。
 - 无云上传、遥测、账号、支付、自动更新和远程运行时依赖。
+- 插件适配层使用 MIT；Atlas 是专有闭源依赖，不继承适配层许可，组合 main.js 不得宣称全部 MIT。保留 Atlas、插件内分发授权及第三方许可全文。`package.json.private: true` 仅防止误发 npm，不表示适配层采用闭源许可或决定 GitHub 仓库可见性。
+- 区分构建时下载和运行时联网：维护脚本可按授权取得锁定签名依赖，已安装插件必须使用内嵌 Worker/Wasm 离线运行，不新增下载或遥测。官方闭源披露与个案判断不等于固定独立前置审批；不能预设须公开 Atlas 或交出整个仓库。
 - `outputs/`、`vendor/`、`node_modules/` 不入 Git。制品白名单不得包含测试库、笔记、源码地图、内部文档或机器路径。
 - 隔离构建与历史证据放在本仓库 `artifacts/validation/`，不再放 Ops 根 `outputs/`；`artifacts/` 与 `test-vaults/` 均不入 Git。本仓库现有 `dist/`、`outputs/` 构建契约保持兼容。
 - 唯一活动人工测试 Vault 固定为本仓库 `test-vaults/AtlasPlugin-Test/`。按需求增量维护，不每次构建创建新 Vault；保留用户笔记、data.json、启用状态及工作区配置。更新前关闭相关 Vault 或禁用插件，只替换经核验的三个插件运行文件，不重置整个 Vault。

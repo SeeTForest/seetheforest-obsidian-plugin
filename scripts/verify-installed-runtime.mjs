@@ -29,9 +29,11 @@ class LocalURL extends URL {
     blobs.delete(url);
   }
 }
-const denied = () => {
+let forbiddenAccessAttempts = 0;
+function denied() {
+  forbiddenAccessAttempts++;
   throw Error("Unexpected filesystem or network access");
-};
+}
 const globals = {
   Blob,
   URL: LocalURL,
@@ -50,6 +52,10 @@ const globals = {
   clearInterval,
   queueMicrotask,
   fetch: denied,
+  XMLHttpRequest: denied,
+  WebSocket: denied,
+  EventSource: denied,
+  navigator: { sendBeacon: denied },
 };
 class LayoutWorker {
   terminated = false;
@@ -101,6 +107,8 @@ class PluginDouble {
 }
 const notices = [];
 const host = {
+  request: denied,
+  requestUrl: denied,
   Plugin: PluginDouble,
   ItemView: class {},
   PluginSettingTab: class {},
@@ -233,6 +241,7 @@ second.onunload();
 assert.equal(blobs.size, 0);
 assert.equal(revoked.size, 6);
 assert.equal(notices.length, 0);
+assert.equal(forbiddenAccessAttempts, 0, "Forbidden access must fail even if runtime catches the error");
 const report = {
   at: new Date().toISOString(),
   atlas: integrity.atlas,
@@ -240,6 +249,8 @@ const report = {
   loadedActualBundle: true,
   host: "Node VM with Obsidian host double, no UI",
   filesystemAndNetworkForbidden: true,
+  forbiddenAccessAttempts,
+  networkGuardScope: "Exercised module/load/layout/cancel/unload paths only; not a DOM/GPU or exhaustive telemetry audit",
   embeddedBytesMatch: true,
   wasmCompiled: true,
   layoutSeedCount: prepared.seed.length,

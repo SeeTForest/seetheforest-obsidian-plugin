@@ -420,3 +420,55 @@ Blog 侧由原 Atlas/Blog 负责人对同一包独立回归，不能用插件静
 - 本轮未覆盖固定 Vault；它仍安装用户验收的 `.8-initial`。正式包应在关闭 Vault/禁用插件并获准更新后
   做真实 Obsidian 复验，不能修改自动回执的 `realObsidian: not-run` 来冒充完成。
   未发布插件 Release、提交社区、公开仓库、配置凭据、发布 npm 或更新 Blog/官网依赖与部署。
+
+### 同日：干净提交复现与正式包安装固定 Vault
+
+- 插件 `b83e1eecd9cb2e0cac25e61b6aa39641a0c55c83` 已推送 main；随后在干净状态重新执行完整 CI，
+  `artifacts/validation/ci/full-12ftNh/receipt.json` 的 `source.dirty: false`，全部 13 阶段通过。
+  三文件、内嵌资源、许可清单及 ZIP 与上轮 `full-IQWS3z` 完全一致；没有重写前一轮 dirty 回执。
+  [该提交的 Windows / Ubuntu 源码 CI](https://github.com/SeeTForest/seetheforest-obsidian-plugin/actions/runs/37478749390)
+  均通过；不是受保护托管完整构建或社区审核。
+- 用户随后明确“已经关闭固定 Vault，请执行安装正式包以及后续步骤”。重新核对正式归档的既有信任根、
+  签名、逐成员摘要、宿主接口及完整 CI 输出，然后只替换固定 Vault 的三个插件运行文件。
+- 安装插件 0.1.0 + Atlas 0.1.7，来自上述干净提交。`verify-test-vault.mjs` 返回 `matches: true`；
+  三文件摘要与上一节完全一致，Vault 其余 12 文件前后摘要一致，未改笔记、data.json、启用或工作区设置。
+- 安装回执：`artifacts/validation/formal-atlas-20261006/vault-install/receipt.json`；
+  旧三文件备份：同目录 `previous-runtime/`。只有关闭 Vault/禁用插件后才能恢复，不能回滚整个 Vault。
+  安装脚本拒绝重复覆盖这份备份，不删除历史证据。
+- 本次完成的是安装与字节核验，真实 Obsidian 新包复验仍为 `not-run`，待用户反馈。
+  未公开仓库、配置官方读取权限、发布插件 Release 或提交社区目录；官方步骤另见 `release-readiness.md`。
+
+## 2026-10-07：用户确认正式包复验通过
+
+- 用户明确反馈：“正式包复验通过”。对象为固定 `AtlasPlugin-Test` 中插件 0.1.0 + Atlas 0.1.7，
+  插件构建源码 `b83e1eecd9cb2e0cac25e61b6aa39641a0c55c83`，正式 Atlas 归档 SHA-256
+  `d17a55b01ac54edb8c346c69c822dfe1b28aa69eb785c3fcde864ce55b8247aa`。
+- 同日重新运行 `node scripts/verify-test-vault.mjs artifacts/validation/ci/full-12ftNh/receipt.json`，
+  三文件均 `matches: true`，摘要与上节一致；没有再次覆盖文件或改变 Vault 内容。
+- 当前正式包的本机人工验收据此记为“用户确认通过”；未提供逐项截图、计时、资源趋势或其他平台数据，
+  不补写测量结果、不外推全平台、不解禁移动端，也不宣称原长拖边界已消失。
+- 自动 CI 和字节比较回执仍保留其自身的 `realObsidian: not-run` / `realObsidianAcceptance: not-run`：
+  这些脚本没有执行真人操作。人工反馈在本节单独记录，不倒改历史回执。
+- 本轮仅更新验收与发行状态文档；未提交推送、公开仓库、授予源码访问、发布插件或提交社区。
+
+### 同日：MIT 适配层与专有 Atlas 边界对齐
+
+- 用户确认“插件适配层 MIT，Atlas 为专有闭源依赖；Atlas 随包离线运行，无运行时下载或遥测”，
+  要求代码、工程配置、文档一致。核对现有 LICENSE、package/npm 锁、签名包许可、许可 banner、
+  runtime-assets 与 atlas-adapter 后，保留已正确的许可证及运行实现，不为文案对齐重写 Atlas 或插件运行代码。
+- 在既有本地 CI contract 增加 Atlas npm 元数据专有许可及 `private: true` 防误发 npm 约束，补充负例；
+  该字段不决定 GitHub 可见性。包检查不再跳过内嵌 Wasm 的已知私有路径扫描，增加 Base64 载荷泄漏负例。
+- VM 离线验证增加 XHR、WebSocket、EventSource、sendBeacon、Obsidian request/requestUrl 拦截，
+  访问即计数，吞掉异常也不能通过；模块加载、初始化、布局、取消、卸载的本次访问尝试数为 0。
+  该验证不挂载 DOM/GPU，不将它描述为对所有潜在网络路径的形式化证明。
+- 本地 source CI `artifacts/validation/ci/source-K1fQhV/receipt.json` 与 full CI
+  `artifacts/validation/ci/full-Ye1hpZ/receipt.json` 均通过。38 项插件测试、12 项 CI 测试通过，
+  新负例添加在既有测试内；lint 0 error / 7 warning；typecheck/build/三文件/离线 VM/benchmark/ZIP 均通过。
+- 新完整构建的 packageIntegrity 与 ZIP 和已验收 `full-12ftNh` 完全一致，三个运行文件均逐字节相同。
+  本次不改运行源码、依赖版本、许可证载荷或构建算法，因此用户已验收的安装制品身份未变；无需重复安装。
+- README、AGENTS、架构、CI 和发行清单统一许可与离线边界，并区分维护时依赖下载、npm private 标志、
+  GitHub 可见性及社区目录审核。官方要求闭源披露与个案判断，不预设固定独立前置审批或必须公开整个 Atlas。
+  首次提交字段与英文披露草稿已准备但未发送；历史记录不倒改。
+- 对本地可达 Git 历史的 10 次提交、135 个 blob 做了有限的路径/制品文件名、私钥标记和 GitHub Token
+  模式扫描，未命中。该扫描不是完整源码/隐私审查，也不是公开批准；仓库仍为 Private。
+- 本轮改动尚未 commit/push；未公开仓库、授予官方源码读取权限、发布插件或提交社区，未覆盖测试 Vault。

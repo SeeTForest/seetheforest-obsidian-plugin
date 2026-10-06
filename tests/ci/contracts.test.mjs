@@ -50,7 +50,7 @@ test("manifest, version map, dependency and license drift are rejected", async (
   const atlas = files["vendor/atlas.lock.json"];
   files["package.json"].dependencies[ATLAS] = "file:vendor/atlas.tgz";
   files["package-lock.json"].packages[""].dependencies[ATLAS] = "file:vendor/atlas.tgz";
-  files["package-lock.json"].packages[`node_modules/${ATLAS}`] = { version: atlas.version };
+  files["package-lock.json"].packages[`node_modules/${ATLAS}`] = { version: atlas.version, license: "SEE LICENSE IN LICENSE" };
   const save = async () => {
     for (const [name, value] of Object.entries(files)) await writeFile(path.join(dir, name), JSON.stringify(value));
   };
@@ -58,8 +58,12 @@ test("manifest, version map, dependency and license drift are rejected", async (
   await copyFile(path.join(root, "ATLAS-RUNTIME-PERMISSION.txt"), path.join(dir, "ATLAS-RUNTIME-PERMISSION.txt"));
   await save();
   await checkContract(dir);
+  files["package-lock.json"].packages[`node_modules/${ATLAS}`].license = "MIT";
+  await save();
+  await assert.rejects(checkContract(dir), /Atlas must retain/);
+  files["package-lock.json"].packages[`node_modules/${ATLAS}`].license = "SEE LICENSE IN LICENSE";
   for (const [file, key, value] of [["manifest.json", "version", "9.9.9"], ["manifest.json", "isDesktopOnly", false],
-    ["package.json", "license", "UNLICENSED"], ["versions.json", files["package.json"].version, "0.0.0"]]) {
+    ["package.json", "license", "UNLICENSED"], ["package.json", "private", false], ["versions.json", files["package.json"].version, "0.0.0"]]) {
     const old = files[file][key];
     files[file][key] = value;
     await save();

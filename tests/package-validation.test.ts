@@ -62,6 +62,16 @@ test("community package requires exactly three files, valid notices and matching
     for (const [name, value] of Object.entries(files))
       await writeFile(path.join(root, name), value);
     await verifyRuntimeDirectory(root, integrity);
+    // Binary payloads must not bypass the private-path checks after Base64 decoding.
+    const leakedWasm = Buffer.concat([bytes.wasm, Buffer.from("C:/Users/fixture/rust/core.rs")]);
+    const leakedMain = main.replace(bytes.wasm.toString("base64"), leakedWasm.toString("base64"));
+    await writeFile(path.join(root, "main.js"), leakedMain);
+    await assert.rejects(verifyRuntimeDirectory(root, {
+      ...integrity,
+      files: { ...integrity.files, "main.js": hash(leakedMain) },
+      embeddedAssets: { ...expected, wasm: { bytes: leakedWasm.length, sha256: hash(leakedWasm) } },
+    }), /Private or debug data in embedded wasm/);
+    await writeFile(path.join(root, "main.js"), main);
     await assert.rejects(
       verifyRuntimeDirectory(root, { ...integrity, noticesSha256: "bad" }),
       /notices/,
