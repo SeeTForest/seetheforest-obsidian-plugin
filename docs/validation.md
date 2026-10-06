@@ -376,3 +376,47 @@ Blog 侧由原 Atlas/Blog 负责人对同一包独立回归，不能用插件静
   返回成功，确认固定 Vault 三文件与已验收候选逐字节一致。
 - 此次只完成安装与身份检查，真实 Obsidian 的鼠标入口、选择/阅读、多面板、弹出窗口、离线和资源释放
   仍待人工执行；未宣称宿主验收或社区发行成功。候选包、Vault 和本地证据均不进入 Git。
+
+### 同日：用户确认当前测试版本验收通过
+
+- 用户在固定 Vault 安装后明确反馈：“已验收，这个版本没问题”。验收对象为插件 0.1.0 +
+  Atlas `0.1.7-obsidian.8-initial`，对应 `test-vault-install-20261006/receipt.json` 的三文件身份。
+  这是用户对当前版本的人工验收结论，不是 Agent 新执行的 Obsidian 自动测试。
+- 未提供逐条操作记录、不同操作系统或额外压力场景数据，因此不补写虚构的资源曲线、截图或逐项实测结果，
+  不据此解禁移动端，也不改变此前已记录的归静观察。
+- 用户随后授权已验收 Atlas 正式化及插件依赖升级：只纳入已验收整合代码，生成闭源签名正式发行，
+  更新插件 Atlas/npm 锁，重新构建验证并保存推送。插件社区 Release/目录提交及 Blog/官网自动升级不在本轮范围。
+
+### 同日：正式 Atlas 0.1.7 依赖升级与完整插件 CI
+
+- 用户明确批准现有私有 Atlas 仓库承载正式 Release；构建发现 Wasm 本机路径泄漏后，又批准原负责人
+  最小修复 Rust 构建路径映射和 Wasm 泄漏检查，不改物理、数学或交互实现。失败同名包保留，不用于消费。
+- 正式来源：[Atlas v0.1.7](https://github.com/SeeTForest/seetheforest-atlas/releases/tag/v0.1.7)，
+  源码 `adb7ad0ac9a5e86ffa0009eebc171531fd9a8249`；本线程从 Release 独立下载三资产，
+  使用既有 SPKI 信任根验签、检查保护清单、全部成员摘要和宿主接口后升级插件 Atlas/npm 两锁。
+  归档 SHA-256：`d17a55b01ac54edb8c346c69c822dfe1b28aa69eb785c3fcde864ce55b8247aa`。
+  插件仍为 0.1.0，`package.json` 的 `file:vendor/atlas.tgz` 不变，npm 锁只改变 Atlas 版本和 integrity。
+- 正式包不是 `.8` 的单纯改名。上游 `path-fix/equivalence-signed.json` 记录：运行源码 src/rust 不变，
+  新旧优化 Wasm 在缓存/非缓存、1/2/4 substeps、拖动释放、边激活与 anchor 回放共 3600 帧、
+  1080000 数值逐项完全一致；不同长度构建目录与主目录的原始 Wasm 字节一致，旧泄漏样本被新门禁拒绝。
+  本线程读取该证据，未冒称自行重跑全部轨迹或完整浏览器矩阵；既有长拖观察不因路径修复而解除。
+- 本地完整管线 `node scripts/ci.mjs full` 通过，回执 `artifacts/validation/ci/full-IQWS3z/receipt.json`：
+  验签/宿主预检、锁定安装、lint、typecheck、38 项插件测试、12 项 CI 测试、build、verify:package、
+  verify:installed-runtime、50/500/4096 合成 benchmark、ZIP 打包与回读均通过；lint 0 error / 7 warning。
+  此轮来源记录为 `ecc026d` 加当前两锁及文档改动，receipt 明确 dirty，不倒改成干净提交。
+- 独立成员及最终插件对照记录在 `artifacts/validation/formal-atlas-20261006/comparison.json`。
+  Worker、index.js、CSS、三份类型、README、LICENSE 完全一致；solid.js 仅 Wasm 引用改变。
+  新 Wasm 93040 bytes，SHA-256 `3a3559c3cab27e5bbda14c6a4d97fa121b2f4bb8601690563f9a3b2f3152bc54`；
+  已知本机绝对路径扫描通过，不把单项扫描当作普遍保密证明。
+- 插件 manifest/styles 与用户已验收候选字节一致；内嵌物理 Worker、布局 Worker 和许可文本一致。
+  main.js 从 975762 变为 975614 bytes。仅替换 Wasm 后直接字符串对照仍有压缩标识符差异；
+  用相同输入做不压缩标识符的内存诊断构建，再仅替换 Wasm 载荷和引用后完全一致。
+  诊断没有修改正式构建、受保护输入或已安装文件，不把两个不同 main.js 宣称为逐字节相同。
+- 正式插件三文件 SHA-256：
+  - main.js：`6450f13dcbfa90cce7dca217fadffab0015dd06d59ea28fb16dafbf851ee4344`
+  - manifest.json：`994c156450e78343feb19a06e0833197bc4056eef261b72f70be8ec33691ea84`
+  - styles.css：`5f8d3fd903d65dcd5c99205669f8d74574c350a17bb3943fc495976195647013`
+  - ZIP：`156de3b10c54877c1c11c4539e7d8fd1eff71b593837fac8a2833f0ca36640e3`
+- 本轮未覆盖固定 Vault；它仍安装用户验收的 `.8-initial`。正式包应在关闭 Vault/禁用插件并获准更新后
+  做真实 Obsidian 复验，不能修改自动回执的 `realObsidian: not-run` 来冒充完成。
+  未发布插件 Release、提交社区、公开仓库、配置凭据、发布 npm 或更新 Blog/官网依赖与部署。

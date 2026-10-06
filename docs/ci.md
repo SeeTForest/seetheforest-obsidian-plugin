@@ -32,7 +32,7 @@ sh scripts/ci.sh full
 `.sh` 固定 LF 换行，`.bat` 固定 CRLF。模式缺失、不合法或额外参数会失败，不隐式运行全量构建。
 
 获准准备 Atlas 本地输入时使用既有 `npm run prepare:atlas -- <tgz> <sig> <pem>`；更换版本仍需独立的依赖升级授权，
-本次只增加验证入口，不更改正式锁。日常验证不需要下载器 `fetch:atlas`，更不需要签名权限。
+脚本不自行更改正式锁。日常验证不需要下载器 `fetch:atlas`，更不需要签名权限。
 
 成功退出码为 `0`，失败为非零。终端最后输出 `receipt.json` 的相对位置；在其同目录查看失败阶段的 `.log`
 和 `.error.log`。完整构建成功后的安装三文件位于 `workspace/dist/`，ZIP 和完整性清单位于 `workspace/outputs/`。
@@ -102,9 +102,9 @@ YAML 只保留事件、runner、Node 环境、权限、审批边界和脚本调�
 | 类型 | 名称 | 含义 |
 | --- | --- | --- |
 | Variable | `ATLAS_CI_ENABLED` | 完成保护审查后设为 `true` |
-| Variable | `ATLAS_RELEASE_REPOSITORY` | 已批准的发行制品库 `owner/repo`，无需访问 Atlas 源码 |
+| Variable | `ATLAS_RELEASE_REPOSITORY` | 已批准的发行仓库 `owner/repo`；本次选定 `SeeTForest/seetheforest-atlas` 私有源码仓库，不是独立制品库 |
 | Variable | `ATLAS_RELEASE_TAG` | 精确 Release Tag；不自动使用 latest |
-| Secret | `ATLAS_RELEASE_READ_TOKEN` | 仅对应制品库 Contents 只读权限的短权限凭据；不是签名私钥 |
+| Secret | `ATLAS_RELEASE_READ_TOKEN` | 仅对应发行仓库 Contents 只读权限的短期凭据；不是签名私钥。若发行库也是源码库，该权限仍可能读取源码 |
 
 Release 需要有以下三个精确名称的资产：
 
@@ -119,6 +119,10 @@ Ed25519 签名、保护标志和逐文件摘要；全部通过才复制到 `vend
 Release Tag 只决定下载位置，不替代摘要/签名信任。配置 Tag 与版本不一致或资产缺失时失败，不回退。
 Token 仅传给下载步骤，不传给安装、测试或构建。CI 不需要任何签名私钥。
 本机无需使用该下载器：可继续 `npm run prepare:atlas -- <tgz> <sig> <pem>` 使用已批准本地包。
+
+2026-10-06 用户批准使用现有私有 Atlas 仓库承载正式 Release，不公开仓库、不发布 npm。
+这不等于批准创建读取凭据或给官方审核器访问：同仓库的 Contents 读取权限不能宣称是“仅制品、不含源码”。
+如后续需要不接触源码的自动下载，应另行决定独立制品仓库或交付机制；当前本地构建不依赖该扩展。
 
 工作流使用 GitHub 托管 runner（需要 Node 24 Action 运行支持）；不要未经审查改成持久化共享 self-hosted runner。
 2026-10-06，插件提交 `4fc9cdd` 的[托管源码矩阵](https://github.com/SeeTForest/seetheforest-obsidian-plugin/actions/runs/37440708308)
@@ -136,16 +140,28 @@ Token 仅传给下载步骤，不传给安装、测试或构建。CI 不需要�
   Atlas 专有许可及其他依赖许可独立保留；合成后的整个 `main.js` **不是全部 MIT**。
   构建 banner 同时携带插件 MIT、Atlas 许可和实际打包的第三方 notices，不增加安装文件数量。
 
-## 当前阻塞与发行顺序
+## 当前正式依赖与发行顺序
 
-正式 Atlas Lock 仍是 0.1.6，缺少宿主 API 和节点选择/阅读分离支持。
-`ci:full` 应在 `atlas-preflight` 失败，不能删除门禁或自动换成候选让正式管线显示通过。
+2026-10-06 已获准升级两份锁到正式 Atlas `0.1.7`，含宿主 API 与选择/阅读分离支持。
+来源为私有仓库 `SeeTForest/seetheforest-atlas` 的 `v0.1.7`，源码 `adb7ad0ac9a5e86ffa0009eebc171531fd9a8249`。
+归档 SHA-256 固定为 `d17a55b01ac54edb8c346c69c822dfe1b28aa69eb785c3fcde864ce55b8247aa`；
+可信公钥指纹仍由源码锁固定，不从下载到的公钥自行建立信任。不要使用此前同名的路径泄漏失败包。
+
+已有获授权 GitHub 读取身份的维护者可本地执行（下载目录须为空或尚不存在，不覆盖历史资产）：
+
+```text
+gh release download v0.1.7 --repo SeeTForest/seetheforest-atlas --pattern seetheforest-atlas-0.1.7.tgz --pattern seetheforest-atlas-0.1.7.tgz.sig --pattern atlas-signing-public.pem --dir artifacts/validation/atlas-0.1.7-download
+npm run prepare:atlas -- artifacts/validation/atlas-0.1.7-download/seetheforest-atlas-0.1.7.tgz artifacts/validation/atlas-0.1.7-download/seetheforest-atlas-0.1.7.tgz.sig artifacts/validation/atlas-0.1.7-download/atlas-signing-public.pem
+npm run ci:full
+```
+
+普通复现不更改依赖锁；只有另获版本升级授权时才更新 Atlas/npm 两锁。本地管线不要求配置 GitHub CI Secret。
 
 进入社区发行还需要逐项完成：
 
-1. Atlas 负责人收敛候选，并通过 Blog 自己定义的完整视觉与交互回归；本插件 CI 不重新定义这些用例。
-2. 真实 Obsidian 固定 Vault 验收，包括点击/阅读、多面板、离线、主题、资源释放、大库性能；原生功能差距见 `native-graph-parity.md`。
-3. 获批准的 Atlas Release 及再分发授权；再显式升级 Atlas Lock 与 npm lock，执行受保护完整 CI。
+1. 保留 Atlas/Blog 原负责人定义的 `.8` 回归及正式化等价证据；本插件 CI 不重新定义这些用例，路径修复后的包不冒称重跑完整浏览器矩阵。
+2. 固定 Vault 的 `.8` 已获用户验收；最终正式包仍应做真实 Obsidian 复验，覆盖更新、离线及资源释放。原生功能差距见 `native-graph-parity.md`。
+3. 正式签名 Release、插件内分发授权和两锁升级已落实；最终构建运行本地完整 CI，证据见 `validation.md`。
 4. Atlas 闭源审核方案与官方审核结论；插件 MIT 不解决闭源组件审查问题。
 5. 明确插件 Release 版本，生成并核验三文件资产及双版本证据；得到发布授权后才创建 Tag/Release、提交社区目录。
 
