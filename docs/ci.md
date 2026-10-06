@@ -42,6 +42,12 @@ sh scripts/ci.sh full
 `build.mjs` 构建，`verify-*.mjs` 制品检查，`package*.mjs` 打包，`benchmark.ts` 合成基准。
 新增重复性工作先进入相应本地脚本和测试，GitHub 只调用它。
 
+真实宿主验收前，使用 `node scripts/verify-test-vault.mjs <full-ci-receipt.json>` 只读比较固定
+`test-vaults/AtlasPlugin-Test` 已安装的三个运行文件与成功完整 CI 的字节；不用停止 Obsidian 即可检查，
+但更新插件仍必须关闭 Vault 或禁用插件。匹配返回 0，不匹配/缺文件/证据不完整返回非零。
+该脚本先核对回执与保留构建目录、制品清单，再比较三个安装文件，不读笔记或 `data.json`、不安装、不联网。
+本地回执不是签名证明，匹配只说明安装身份一致；不会授予发布权限或把真实 Obsidian 验收标为通过。
+
 2026-10-06 增量：源码 CI 增加官方 Obsidian 非类型 lint；完整 CI 增加完整推荐类型 lint 和经签名核验的
 50 / 500 / 4096 节点合成基准。lint 的 warning 不冒充零警告，性能基准不冒充真实 Obsidian/GPU 验收。
 新步骤与结果同样写入阶段回执；配置为 `eslint.source.config.mjs`、`eslint.config.mjs`。

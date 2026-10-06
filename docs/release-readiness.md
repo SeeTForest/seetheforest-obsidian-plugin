@@ -6,17 +6,73 @@
 
 | 阶段 | 当前事实 | 放行需要 |
 | --- | --- | --- |
-| 插件质量与 CI | 本地隔离 CI、三文件构建、验签、运行替身与确定性 ZIP 已有实现；官方 lint 已接入 | 对最终源码与正式依赖重新验证，托管 Windows/Ubuntu 矩阵实际通过；审批配置远端 CI |
-| Atlas/Blog 兼容 | `.5-selection` 仍为候选；15–18 秒可接受不是新的通用硬阈值；专项结果不能拼为完整报告 | 原负责人以 Blog main 的正式 Atlas 为主基线，纳入已核验测试修正，完成一轮有界完整收敛 |
+| 插件质量与 CI | `.8-initial` 完整本地隔离 CI 已通过：38 + 12 项测试、类型检查、三文件/VM/ZIP；lint 0 error / 7 warning；`0564e9e` 的托管源码矩阵已通过 | 对最终源码与合格正式依赖执行本地完整管线；仅在需要托管受保护复核时另行审批远端配置，不把 GitHub 环境作为本地构建前提 |
+| Atlas/Blog 兼容 | 最终 `.8` 原矩阵 17 项通过；剩余搜索项经用户批准仅修第 13 例后，独立单次评分 21/21、100% 通过；19 场景、106 行为、历史 raw 8/8 与同期配对 8/8 通过 | 已闭合本轮自动门禁覆盖，但旧矩阵仍保留 17/18；长拖超过 15 秒及旧 22.5 秒观察继续披露，不把自动门禁通过当作全部体验已达标或正式发行授权 |
 | 正式依赖 | 插件正式锁仍为 0.1.6，缺必需宿主接口，完整构建应失败 | 合格、可追溯、授权再分发的 Atlas Release；获准后同时更新 Atlas 和 npm 锁，不能只替换 tgz |
 | 首版功能范围 | 用户授权以 Atlas 物理/数学一致性及视觉交互核心优先，其他功能由工程判断安排 | 首版交付可靠全局/局部探索、现有搜索过滤、阅读与离线；高级搜索、力/显示滑块、箭头、创建时间动画留作后续，不假称已支持 |
-| 真实宿主验收 | Node VM、浏览器替身不是 Obsidian/Electron；固定 Vault 未更新 | 同一最终三文件在固定 Vault 中通过下表；记录软件版本、哈希与截图 |
-| 闭源审核 | 插件适配层 MIT 已确认；Atlas 仍专有且须官方个案审查 | 确认再分发许可、受限源码审核路线和官方构建核验方式；不得为审核擅自公开 Atlas |
+| 真实宿主验收 | 固定 Vault 已获准更新为插件 0.1.0 + Atlas `.8-initial`，三文件哈希匹配，其余 12 文件字节不变；尚未真实 UI 验收 | 重新打开该 Vault，逐项执行下表；Node VM、浏览器替身及安装字节匹配不代替 Obsidian/Electron 实测 |
+| 闭源审核 | 插件适配层 MIT、Atlas 合格运行制品的插件内免费分发及安装运行授权、受限只读源码审核路线已确认；尚未授予仓库访问 | 与官方确认个案审核及构建核验方式；批准具体仓库权限后才交付审核源码，不擅自公开 Atlas |
 | 社区发行 | 尚无本轮发布与目录提交授权 | 清洁源码提交、Release/Tag、公开安装资产、提交审核、社区实际安装/更新验收 |
 
 2026-10-06 用户已授权 Atlas 原负责人：把采样修正纳入版本管理、定稿动态截图方法后进行一次有界完整回归。
 该授权不包含修改 runtime、物理参数、历史参考图、推送、发布或部署。本线程不替上游重新定义测试。
-负责人随后确认，其线程收到新的部署请求后已暂停隔离回归；本次测试修正尚未提交、新的完整矩阵尚未运行，等待用户确认任务优先级。不能把授权或专项诊断计为验收通过。
+负责人随后确认，其线程收到新的部署请求后曾暂停隔离回归。用户再次要求完成后续任务后，负责人已恢复隔离测试，
+在 `codex/atlas-regression-sampling-20261006` 分支固定采样方法。`.5-selection` 的首次对照暴露了真实
+Inspector 接口缺口，后由 `codex/atlas-host-inspector-integration-20261006` 整合分支解决；
+签名 `.6-inspector` 的代码源为 `7837dc66dd116f7abc78e7c4da53c435738e0365`，尚未提升 Atlas main。
+同日完成的有界矩阵使用 Blog `520d7e6`、同一公开图 558 节点 / 846 边，对照正式 `0.1.6-inspector.4`。
+`.6` 候选当时通过 19/19 场景、106/106 行为、新鲜八态双包视觉 8/8，原生宿主浏览器专项另为 25/25；
+这不是 Obsidian 实测，也不是后续 `.8` 的完整回归结果。
+
+当时 No-Go 的具体原因：稳定性动作覆盖正式 179/180、候选 177/180，存在测试未取得可见命中点而跳过动作；
+装配正式 12000 步 error、候选采样结束 11232 步仍 playing，两者位置残差均约 18.26328；候选长拖后
+回稳 22234 ms，正式对应观察 14718 ms，但当时没有充分命令 trace 证明两次刺激相同，不能断言优化改变物理。
+旧 raw 截图正式 2/8、候选 5/8 的失败保留，新鲜双包八态对照单独报告，不覆盖历史参考图。
+用户明确批准的默认手机 Inspector 普通流布局例外保留，其他默认体验与物理数学不变。
+后续通过固定刺激专项补足动作证据、定位装配模型；不得盲目重复全矩阵。
+权威证据由原负责人维护于 Atlas `outputs/validation/host-inspector-integration-20261006/`，
+本线程不另创 Blog 门禁，也不把既有正式版本失败当作候选自动放行的理由。
+
+最新专项收敛（原负责人报告及 `docs/host-integration-diagnostics.md`）：
+
+- 修正测试坐标读取与按下之间的时间差，确认真实命中后，两包均通过 180 次选择 / 36 次拖动 / 6 次导航。
+  历史未命中失败保留，不把未施加动作计为通过。
+- 两份长拖命令 trace 交叉输入正式 direct / 候选 cached 核心，各 3 次逐命令结果逐位一致。
+  慢输入在正式核心也需 1349 步归静；证据不支持这些输入上核心回退，也不代表长拖体验目标已达成。
+- 装配问题由真实旋转相位改变出生规划触发。负责人记录用户在其线程改定契约：每张图使用首次物理就绪、
+  未旋转时的固定初态；每次独立真实生成复用它，成功后从初始方向恢复旋转，取消/错误保留点击前图。
+  这是明确改变生成行为的产品契约，不再执行先前提出的“映射回当前视角”方案；不能描述为所有体验完全未变。
+- `.8-initial` 源 `b8e8179ee2cc2c345adba59318655c3b7b7903fe`，Wasm 与 `.6` 哈希相同。
+  1440/390 两个视口、各两个环境旋转相位的生成均 complete，初始化命令深相等；取消、Reduced Motion、
+  键盘、完成后拖动及故意阻断演示 Wasm 的错误恢复专项通过。生成首轮约 29–30 秒，不是拖动后归静时间。
+  仍仅为固定初态生成专项通过，正式依赖和真实 Obsidian/社区发行门槛不变。
+
+用户随后在插件线程明确同意针对最终 `.8` 执行一次串行、有界回归。已交由 Atlas/Blog 原负责人按
+A（最终宿主静态检查、154 测试、身份及受保护 API）→ B（页面与消费端闭环）→ C（宿主、Worker、
+可见运行时及稳定性）→ D（19 场景质量和同期八态配对）执行。新轮次须固定配置和制品哈希，
+不得复用现已指向 `.8` 包目录的旧 `.6` 配置；已通过的 `.8` 生成专项不重复。
+这是执行授权，不是通过结果，也不是接受 22.5 秒长拖、修改阈值/参考图、推送、发布或正式升级的授权。
+失败保留并分类；实现或标准如需改变，先报告请求决定。
+
+该轮已完成，证据为 Atlas `outputs/validation/final-initial-compatibility-20261006/`。本线程独立读取
+`attempts.json`、`B-search-classification.json`、quality 和 paired 报告，核对 18 项中 17 通过；
+最终 `.8` 的静态检查、154 测试和受保护 API、页面/阅读/导航/形态、全部 C 项、D 质量与配对均通过。
+B-search 的 21 例历史集合要求《股票与公司运作机制》，锁定公开快照不存在该文章；两包 manifest
+哈希完全相同，Blog 既有文档已记录此缺口。评分尚未执行，不是 Top-5 达标，也不是本次 Atlas 索引遗漏证据。
+具体修订提案尚待原负责人形成及用户审核；不得删例、缩分母、降低原 90% Top-5 阈值或重写旧失败。
+本轮最长回稳 16.767 秒，15.529 / 16.603 / 16.767 秒三条超过原 15 秒观察线；旧 22.5 秒完整输入
+未被本轮消除。负责人关于此前 15–18 秒接受范围的说明不等于可宣称严格 15 秒全部达标。
+固定 Vault、正式版本与社区发行门槛仍未解除。
+
+随后用户明确批准精确修订，仅将第 13 条改为查询 `金融 杠杆 折现值`、预期文章
+`学科09：金融学重要模型`，其余 20 条与总数 21 不变。负责人仅在隔离 Blog 副本修改并运行一次，
+2026-10-06 21:16（Asia/Shanghai）结果 21/21、100%，达到原 Top-5 ≥90% 阈值。
+本线程独立核对 receipt、两行 diff、新旧 fixture 哈希及全部不变输入，确认只变第 13 例，
+Atlas 包、公开内容、索引、算法、评分器、锁和旧矩阵证据均未变。
+独立证据为 Blog `outputs/validation/atlas-host-inspector-20261006/search-fixture-revision/`；
+原 B-search 失败不改写，以这份新版 fixture 通过证据闭合搜索阻塞。上述“尚待审核”保留为先前状态。
+此次仅完成隔离验证，测试修订未纳入 Blog 主分支；后续正式回归若要复用，须另行保存获准的 fixture 修订。
+未因此提交、推送、发布、升级依赖或安装插件，真实 Obsidian 验收仍待完成。
 
 同日用户明确：物理、数学计算正确性与一致性，以及视觉、交互体验是 Atlas 核心价值；其他功能由本线程判断。
 据此采用上表首版范围，不为功能对齐复制原生 Graph 的另一套力模型，不因首版缩减外围功能放宽核心验收。
@@ -70,10 +126,36 @@ lint 的 warning 与 error 分开报告，不以关闭官方错误规则换取�
 本插件的 `file:vendor/atlas.tgz` 是不入 Git 的构建输入：必须事先与官方明确如何取得和验证该依赖以及复现构建，
 不能期待公开源码仓库克隆后无需额外输入就能安装，也不能把私有读取 Token 写进仓库供审核器使用。
 
+2026-10-06 用户已接受向官方提供受限、只读源码审核的路线；这不是已授予访问，也不是对整个 Atlas 仓库、
+所有历史或其他产品授权读取。实际安装 GitHub App、指定可读仓库、上传材料前，仍需确认精确范围。
+Atlas 基线与 `.5-selection` 内 LICENSE 均默认不授予复制/分发权，要求另行书面协议。
+用户已于 2026-10-06 单独确认插件内免费分发及安装运行授权，记录于根 `ATLAS-RUNTIME-PERMISSION.txt`，
+仅覆盖通过验收的运行制品，不公开 Atlas 源码、不授予 Atlas 单独再分发权；后续构建随 `main.js` 保留全文。
+这是权利方的插件内分发许可，不是官方审核结果或发布操作授权。
+
+### 官方预沟通材料（草稿，尚未发送）
+
+对外仅使用产品工程信息和合成截图，不包含笔记、签名私钥、机器路径、内部服务或未获准的源码。
+可向官方说明并确认以下内容，之后再确定审核输入方案：
+
+> See the Forest Atlas is an Obsidian plugin built by `seetheforest-obsidian-plugin`.
+> The integration layer uses MIT; its Atlas rendering and layout dependency remains proprietary.
+> The three-file plugin bundles its Worker and Wasm resources for offline use, with license notices retained.
+> It has no telemetry, accounts, remote runtime downloads or self-updates.
+>
+> We can arrange restricted read-only source review, subject to approval of the exact repository and access scope.
+> Before release, please confirm whether this combination is eligible for case-by-case review; what proprietary
+> source scope you require; how your build verifier should receive a pinned signed dependency that is not in the
+> public integration repository; and how protected JavaScript and Wasm should be presented for review without
+> hiding their purpose. We will not provide credentials in the repository or assume approval from local tests.
+
+官方受限源码审核机制并不自动说明能跨仓库读取某个私有依赖，不能自行设计绕过扫描的安装步骤。
+需由官方确认依赖提供方式，再准备与最终发布源码和制品对应的审核材料。
+
 获得明确授权后按顺序执行：
 
 1. 审阅并保存源码；核验拟公开 Git 历史、README、MIT、闭源披露、隐私与未支持项；公开仓库是单独动作。
-2. 配置 CI Environment、只读制品凭据、main 保护；跑实际托管矩阵，记录最终精确源码与签名依赖。
+2. 先用本地脚本完成最终完整管线并保存精确源码与签名依赖证据；需要托管复核时，再经批准配置 CI Environment、只读制品凭据及分支保护。源码跨平台检查复用相同脚本。
 3. 与官方确认闭源组件再分发和审核路线；只授予经过用户批准的范围，绝不公开私钥。
 4. 发布同一已验收源码的插件 Tag/Release，上传 `main.js`、`manifest.json`、`styles.css` 三个独立资产。
    ZIP 只是手动安装便利物，不能代替这三个社区安装资产；附版本说明、双版本追溯与已知限制。

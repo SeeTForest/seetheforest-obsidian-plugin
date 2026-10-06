@@ -105,6 +105,8 @@ const mainBuild = await build({
 const notices =
   "Plugin integration: seetheforest-obsidian-plugin\n" +
   (await readFile(path.join(root, "LICENSE"), "utf8")) +
+  "\n\nAtlas plugin distribution permission:\n" +
+  (await readFile(path.join(root, "ATLAS-RUNTIME-PERMISSION.txt"), "utf8")) +
   "\n\nAtlas proprietary component:\n" +
   verified.read("LICENSE").toString() +
   "\n\n" +

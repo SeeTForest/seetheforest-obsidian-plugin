@@ -1,0 +1,22 @@
+See the Forest Atlas: permission for distribution inside the Obsidian plugin
+
+Rights holder: SeeTForest
+Authorization confirmed by the project owner on 2026-10-06.
+
+SeeTForest authorizes seetheforest-obsidian-plugin (display name: See the Forest
+Atlas; installation ID: seetheforest-atlas) to distribute accepted Atlas runtime
+artifacts free of charge only as part of this plugin. These artifacts may include
+JavaScript, Worker code, Wasm, styles and license notices. Users may install and
+run the resulting plugin with these bundled artifacts.
+
+This permission is limited to runtime artifacts that have passed the required
+acceptance checks. It does not authorize publication of Atlas source code or
+standalone redistribution of Atlas. Atlas remains proprietary; the plugin
+integration's MIT license does not apply to Atlas. Retain the Atlas license and
+applicable third-party notices with the plugin.
+
+This is the separate distribution permission referenced by the bundled Atlas
+license, within the scope above. It is not evidence of successful acceptance,
+approval by Obsidian, or authorization to perform a release or deployment.
+The actual plugin and Atlas versions and artifact hashes are recorded in the
+corresponding build and acceptance evidence.

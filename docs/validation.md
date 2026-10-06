@@ -242,3 +242,137 @@ Blog 侧由原 Atlas/Blog 负责人对同一包独立回归，不能用插件静
 - 新增入口测试使用含空格路径的合成 runner，核验不同工作目录下定位、参数转发、非零退出码透传，并限制工作流只调用既有本地入口；`sh -n scripts/ci.sh` 通过，shell 脚本固定 LF。
 - `.bat full` 返回 1，在 `atlas-preflight` 正确拒绝当前正式 0.1.6 缺少宿主 API；回执 `artifacts/validation/ci/full-ANsJGP/receipt.json`。不能记为完整构建通过，未修改锁、Atlas 或插件运行代码。
 - 上述本地验证完成时，新增入口尚未提交、推送，未运行新托管矩阵，也未覆盖测试 Vault。用户随后授权仅插件仓库 commit + push；不扩大到依赖升级、发布或部署。
+
+### 同日继续生产验收准备
+
+- 本地入口由 `0564e9e` 保存并推送；GitHub 源码检查 `37444925282` 已成功，包含 Windows / Ubuntu。不能由源码矩阵推定受保护构建通过。
+- Atlas 负责人确认恢复隔离双包回归并已建立测试分支；正式基线为 Blog main 锁定的 `0.1.6-inspector.4`，候选仍 `.5-selection`，结果尚待完整报告。
+- 新增 `node scripts/verify-test-vault.mjs <full-ci-receipt.json>`：只读检查已保存构建证据与固定 Vault 三文件身份，不读取笔记或设置，不安装。源码/失败/不完整回执被拒绝，匹配也不代表宿主验收或发行许可。新增 3 项测试后 CI 脚本测试 12/12 通过。
+- 使用先前成功完整构建 `full-oTVo5c` 的回执核验固定 Vault，三个文件均不匹配，脚本正确返回 1；这与尚未覆盖旧测试安装的状态一致，不能用该 Vault 的当前结果代表最新候选。文件未修改。
+- 用户已接受受限只读源码审核路线，尚未授予访问；官方闭源个案政策与受限源码/构建核验机制已于 2026-10-06 重新查阅，依据见 `release-readiness.md`。现有 Atlas 包 LICENSE 要求另行书面再分发许可，未擅自改许可或公开包。
+- Computer Use 技能要求的 `node_repl` 入口未在本会话提供，无法通过该技能直接操作真实 Obsidian；未改用替身结果冒充真实桌面、离线或资源释放验收。本轮尚无新的插件构建、安装、提交、推送或发布。
+
+后续授权与本地构建：
+
+- 用户单独确认 SeeTForest 授权合格 Atlas 运行制品随本插件免费分发并供用户安装运行；仅限插件内制品，不公开源码、不授予 Atlas 单独再分发权。根 `ATLAS-RUNTIME-PERMISSION.txt` 保存记录，CI 检查范围声明，构建保留完整文本；原 Atlas LICENSE 不变。
+- 新隔离消费者 `artifacts/validation/release-check-6f4ac592/` 使用当前插件源码和同一已验签 `.5-selection`，仅在副本使用候选的两份依赖锁，不升级正式工作区。完整回执为 `artifacts/validation/ci/full-95sHLy/receipt.json`（相对于该消费者）。
+- 本地 full 全阶段通过：签名及宿主接口预检、安装、完整 lint / typecheck、38 项插件测试、12 项 CI 测试、构建、制品检查、VM 离线替身、合成基准与 ZIP。lint 0 error / 7 warning，仍需真实弹出窗口等验收。
+- 独立确认授权文本已进入 `main.js`，Atlas Worker、Wasm 与插件布局 Worker 哈希与先前候选相同；构建来源除隔离的两份依赖锁外与当前源码哈希一致。隔离目录没有插件 Git，回执 commit 为 null，不能将父仓库提交冒充构建来源或宣称干净正式发行。
+- 原负责人在正式基线对照中发现 `.5-selection` 缺少 Blog main 已使用的 `KnowledgeAtlasProps.inspectorLayout`，3 项类型错误；正式 `0.1.6-inspector.4` 相同宿主通过。该项是真实接口不兼容，不是截图采样误差；插件构建通过不解除此 No-Go，正式锁与固定 Vault 均未修改。
+
+### 同日：Inspector 整合候选的插件独立验收
+
+- 原负责人将正式 Inspector 与原生宿主分支整合，保留双方祖先链与公开接口，签名候选为
+  `0.1.7-obsidian.6-inspector`，代码源 `7837dc66dd116f7abc78e7c4da53c435738e0365`。
+  包 SHA-256 `7c8d81ee61d7cbb2135cc7c0ca61c1104d74e64b36727a90aefbc31a6303d6fe`。
+- 在产品目录 `artifacts/validation/inspector-candidate-20261006/` 建立隔离消费者，复用既有可信公钥；
+  独立核验签名、公钥指纹、保护清单、所有归档成员哈希和宿主选择/阅读契约。未使用 Atlas 源码构建插件。
+- 完整本地管线成功，回执位于该消费者的 `artifacts/validation/ci/full-mshQFI/receipt.json`：
+  38/38 插件测试、12/12 CI 测试、完整 lint / typecheck、构建、三文件制品校验、VM 离线替身、
+  合成基准和 ZIP 回读通过。lint 为 0 error / 7 warning，未自动修复或屏蔽建议。
+- 核验构建快照与当前根源码：除隔离的 `vendor/atlas.lock.json` 和 `package-lock.json` 外全部摘要一致；
+  npm lock 只有 Atlas 包条目变化，未顺带升级公开依赖。源为 `0564e9e` 后的未提交本地工作区，
+  隔离回执 commit 为 null、逐文件哈希已保存，不冒称干净正式提交。
+- 插件 0.1.0 测试 ZIP 位于该回执相邻 `workspace/outputs/seetheforest-atlas-obsidian-0.1.0.zip`，
+  SHA-256 `41621348d48f23b99e39f0ee52dd041ff26a7dc19ddba702be15bbdbb36ff8a0`。
+  内嵌 Atlas Worker/Wasm 逐字节来自本次签名包，授权和第三方通知完整保留；不宣称与旧 `.5` 全包相同。
+- 合成 50 / 500 / 4096 节点的 layout 时间为 69 / 1188 / 13942 ms，seed 为 23 / 233 / 2751 ms；
+  Node v24.13.1 / Windows，4096 节点记录 heap 124 MiB。不是 GPU 帧率、真实 Vault 或交互归静时间。
+  本轮与 Atlas 负责人串行协调 CPU/GPU 窗口，构建结束后才由其开始专项，避免并发测量干扰。
+- 原负责人 `.6` 双包矩阵：候选 19/19 场景、106/106 行为、新鲜八态视觉 8/8、原生宿主浏览器
+  25/25 通过；完整验收仍 No-Go。剩余稳定性动作覆盖正式 179/180、候选 177/180，装配两包位置残差
+  约 18.26328 且未成功结束，以及候选 22234 ms 长拖回稳。旧 raw 截图失败保留，不能用新配对结果抹去。
+  上游正在做固定刺激/命令 trace、真实命中动作和装配状态专项；此处不替 Blog 重新定义用例或放宽阈值。
+- 正式 Atlas 锁仍 0.1.6；未覆盖固定 Vault，真实 Obsidian、官方审核和发行仍未完成；本轮未提交、推送或发布。
+
+### 同日：固定初态 `.8-initial` 的插件独立验收
+
+- Atlas 原负责人在其线程确认用户改定生成契约：每次观看生成使用该图首次物理就绪时的未旋转初态，
+  成功后从初始方向继续旋转；不映射回点击时视角。取消/错误保留点击前原图。
+  这是上游明确授权的生成行为调整，不描述为零行为变化；物理积分、材料与完成阈值不变。
+- 新包 `0.1.7-obsidian.8-initial` 源码为干净提交 `b8e8179ee2cc2c345adba59318655c3b7b7903fe`，
+  SHA-256 `eeca188807e54b5fdd574aaa62769eab54ace8bd702b892c291d43a089b25bd7`。
+  插件隔离消费者位于 `artifacts/validation/initial-candidate-20261006/`；旧 `.6` 消费者及证据保留。
+- 复用已信任的公钥独立核验签名、保护清单、成员哈希和宿主 API 后，执行既有完整本地管线。
+  回执为该消费者 `artifacts/validation/ci/full-PMTEcL/receipt.json`：全部阶段通过，38 项插件测试、
+  12 项 CI 测试、类型检查、构建、三文件校验、离线 VM 替身、合成 CPU 基准和 ZIP 回读通过。
+  lint 0 error / 7 warning；没有因此宣称真实 Obsidian 或浏览器 GPU 验收通过。
+- 51 个构建输入摘要对比根源码，仅隔离的 Atlas/npm 锁不同；未修改插件运行源码。
+  内嵌 Wasm 与 `.6` 相同，SHA-256 `72edde8afc10ce52ada67f1d7de13f6937653b7cd29411c7fb5d1e2cdc599982`；
+  此事实不表示其余 JS、Worker 或运行行为全部未变。
+- 插件 0.1.0 ZIP 位于回执相邻 `workspace/outputs/seetheforest-atlas-obsidian-0.1.0.zip`，
+  SHA-256 `491bb6f07becff1e3ba165ae5c58c138c611baca46d722bb3c3983f15337b397`。仅供隔离测试，不是正式 Release。
+- 合成 50 / 500 / 4096 节点 layout 为 66 / 1237 / 13990 ms，seed 为 23 / 260 / 2500 ms，
+  4096 节点 heap 94 MiB；Node v24.13.1 / Windows。不是交互归静时间，也不能凭顺序运行宣称性能提升。
+- 已阅读上游 `docs/host-integration-diagnostics.md` 和 `outputs/assembly-initial-reference-review/handoff/report.json`：
+  桌面/移动各两个实际旋转相位的固定初态生成、取消、Reduced Motion、键盘、完成后拖动和故障恢复专项通过。
+  `.8` 的独立 Blog 573 页构建及 closure/public 检查通过；154 项 Blog 单测是在 `.7` 准备阶段执行，
+  不能记成 `.8` 已重跑。同样不能把 `.6` 完整矩阵当作 `.8` 完整兼容结论。
+- 已请原负责人给出最终包剩余既有门禁覆盖和有界验收计划。本线程不另定 Blog 用例，不放宽归静目标。
+  正式依赖锁、固定 Vault 保持不变；未提交、推送、发布或部署，真实 Obsidian 与社区审核仍待完成。
+
+### 同日：用户授权的最终 `.8` 有界 Blog 回归
+
+- 用户明确同意最终 A/B/C/D 串行回归；原负责人执行，本线程只读核验报告，不另定义 Blog 门禁。
+  证据为 Atlas `outputs/validation/final-initial-compatibility-20261006/`；`config.json` / `identity.json`
+  固定 `.8`、正式 `.4`、Blog `520d7e6`、公开 Notes `018ca791` 与图哈希，`attempts.json` 保留每次执行。
+- 18 项门禁中 17 项 passed、1 项 failed。A：最终 `.8` 宿主 boundaries/lint/typecheck/154 测试，
+  15 项直接受保护入口 API 对照通过。该结果补足上一节 `.7` 准备阶段不能代替 `.8` 的覆盖缺口。
+- B：25 页面及阅读/搜索 UI 恢复、导航、形态通过。唯一 B-search 在评分前因 fixture 无效退出：
+  `tests/search/real-cases.json` 的《股票与公司运作机制》不在锁定 558 篇 ContentManifest 中。
+  两包 manifest SHA-256 均为 `c2157a1fcbe6a8bfdf9ade09a31498cc5e02691f81cd64c4d060f783031d24db`；
+  用例来源 Blog `2af23e0`，历史文档 `97be35e` 已记录同一缺口。未读私库，未猜测原文章迁移原因。
+  `B-search-classification.json` 保留溯源；Top-5 评分未执行，不能以 UI 搜索通过替代。
+- C 全部通过：initial-load、25 项 host activation、Worker 136 帧（RMS/max 误差 0）、可见运行时、
+  runtime visual、稳定性 180 选择 / 36 真实命中拖动 / 6 导航。负责人报告可见拖动回稳 10.327 秒、
+  193 节点传播、约束误差 0；idle/recovery p95 均 16.8 ms，retained heap 9.482 MiB。
+- D-quality 单次 19/19 场景完成，106/106 行为、8/8 既有历史 raw 截图通过；本线程读取报告确认
+  `completed: true` / `passed: true`，106/106 与 8/8。旧 `.6` 的失败证据未改写，不把本次通过回填旧轮次。
+  同期双包八态配对 `completed/passed: true`，负责人确认 8/8 可比；7 态像素差 0，active-drag
+  差异 0.0009686%，原预算 3.5%，未改阈值/参考图。
+- 本轮 11 条 Atlas 回稳观察最长 16.767 秒；15.529 / 16.603 / 16.767 秒超过 15 秒观察线，
+  不宣称严格 15 秒全达标，不证明旧 22.5 秒输入已消失，不据此声称普通物理性能优化。
+  平均 58.96 FPS / p95 16.8 ms 仅是本次实测；不外推所有环境。
+- 身份预检曾误用 `_assets` 路径，按实际桥接 `assets` 修正只读定位后通过；`preflight-failure.json`
+  保留，未改产品或产品门禁。独立失败的搜索项未重跑；负责人正拟具体最小 fixture 修订，等待用户审核。
+- 本轮未修改物理实现、完成阈值、参考图或正式依赖。仍未更新测试 Vault，未做真实 Obsidian、官方审核或发布；
+  17/18 通过不能写成全部兼容验收结束。
+
+### 同日：获批单条搜索用例修订与单次评分
+
+- 用户在本线程明确回复“同意”，批准仅替换第 13 条两个字段，并单独执行一次新版搜索评分。
+  原负责人在隔离 Blog `fixed-initial/tests/search/real-cases.json` 中将查询 `股票 公司运作机制`
+  改为 `金融 杠杆 折现值`，预期文章 `股票与公司运作机制` 改为 `学科09：金融学重要模型`。
+  其余 20 条、总数 21、搜索算法、评分器和 Top-5 ≥90% 门槛保持不变；没有试排名再改题。
+- 2026-10-06 21:16:28–21:16:31（Asia/Shanghai）仅执行一次，21/21、命中率 100% 通过。
+  前 20 条期望结果 rank 1，第 21 条 HTTP/HTTPS 为 rank 4。只修已证明无效的输入，不缩分母或移除困难用例。
+- 独立证据为 Blog `outputs/validation/atlas-host-inspector-20261006/search-fixture-revision/`，
+  含 `receipt.json`、原/新 fixture、`fixture.diff`、`search-quality.json` 与日志。
+  原 fixture SHA-256 `31990fd611dcbc0451c71f260d3ce71981c308b3481d0db69cdd80f70f0999c2`；
+  新 fixture SHA-256 `c2003ea70beacfb68e59864e780c53c62b32e1754e39d5eb5f3809099875e4c8`。
+- 本线程读取回执、精确 diff 并独立重算摘要：新旧均 21 条且只变第 13 条；回执列出的所有不变输入摘要
+  均仍匹配，包括 manifest、search-index、graph、Atlas `.8` 包、锁、评分器、搜索源码及原矩阵证据。
+  候选仍为 `.8-initial` / `b8e8179`，没有用新制品替代原先通过门禁的包。
+- 身份准备因误引用不存在的 `outputs/graph.json` 停止，随后按实际 `apps/web/dist/content/graph.json`
+  核验同一预期哈希；发生在评分前且记录于回执，不计为一次评分，也没有借机修改图或内容。
+- 原矩阵 `attempts.json`、summary、B-search 失败日志继续保持原样；本轮以独立获批 fixture 的通过结果
+  闭合搜索输入阻塞，不回填成“原矩阵一次 18/18”。固定候选的本轮自动门禁覆盖已闭合。
+- 严格 15 秒归静仍非全达标，旧 22.5 秒输入未重放且未豁免，不能宣称所有体验问题消失。
+  修改仅位于隔离副本，未进入 Blog 主分支；本轮无 commit、push、正式依赖升级、Vault 覆盖、发布或部署。
+  真实 Obsidian 与官方审核仍未完成，自动门禁结果不是正式发行许可。
+
+### 同日：获准保存源码并更新固定测试 Vault
+
+- 用户明确要求提交、推送、覆盖测试 Vault，并再次确认 `AtlasPlugin-Test` 已关闭。本次仅保存插件仓库，
+  不提交 Atlas/Blog 分支、升级正式依赖或发布制品；前述“未提交/未安装”保留为各轮历史状态。
+- 提交前本地 `ci:source` 通过，回执 `artifacts/validation/ci/source-TScjcO/receipt.json`；
+  完整 CI 已通过的 `.8` 构建输入与当前代码、测试、许可文本摘要一致，只有隔离副本的两个依赖锁不同。
+  再次验签、核对保护清单及三文件内容完整性通过，没有重新签名或改变已测制品。
+- 固定 Vault 仅覆盖 `main.js`、`manifest.json`、`styles.css`，安装插件 0.1.0 + Atlas
+  `0.1.7-obsidian.8-initial`。旧三文件在 `artifacts/validation/test-vault-install-20261006/previous-runtime/`
+  完整备份并核对摘要，旁边 `receipt.json` 保存来源与安装前后哈希。必要时关闭 Vault 后可恢复旧三文件。
+- 笔记、data.json、工作区等其余 12 个文件前后 SHA-256 均一致，未改启用状态或其他插件。
+  `node scripts/verify-test-vault.mjs artifacts/validation/initial-candidate-20261006/artifacts/validation/ci/full-PMTEcL/receipt.json`
+  返回成功，确认固定 Vault 三文件与已验收候选逐字节一致。
+- 此次只完成安装与身份检查，真实 Obsidian 的鼠标入口、选择/阅读、多面板、弹出窗口、离线和资源释放
+  仍待人工执行；未宣称宿主验收或社区发行成功。候选包、Vault 和本地证据均不进入 Git。

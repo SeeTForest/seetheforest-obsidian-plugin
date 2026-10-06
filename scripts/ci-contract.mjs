@@ -43,6 +43,10 @@ export async function checkContract(root) {
   assert.equal(pkg.license, "MIT");
   assert.equal(lock.packages[""].license, "MIT");
   assert.match(await readFile(path.join(root, "LICENSE"), "utf8"), /Atlas remains\s+proprietary/);
+  const permission = await readFile(path.join(root, "ATLAS-RUNTIME-PERMISSION.txt"), "utf8");
+  assert.match(permission, /only as part of this plugin/);
+  assert.match(permission, /does not authorize publication of Atlas source code/);
+  assert.match(permission, /standalone redistribution of Atlas/);
   for (const group of ["dependencies", "devDependencies"]) {
     assert.deepEqual(pkg[group], lock.packages[""][group]);
     for (const [name, version] of Object.entries(pkg[group]))

@@ -91,7 +91,7 @@ try {
     } catch { /* exported source: hashes, not a guessed parent-repository commit */ }
   });
   await phase("snapshot", async () => {
-    for (const entry of ["src", "scripts", "tests", ".github", "package.json", "package-lock.json", "tsconfig.json", "eslint.config.mjs", "eslint.source.config.mjs", "manifest.json", "versions.json", "styles.css", "LICENSE", "vendor/atlas.lock.json"])
+    for (const entry of ["src", "scripts", "tests", ".github", "package.json", "package-lock.json", "tsconfig.json", "eslint.config.mjs", "eslint.source.config.mjs", "manifest.json", "versions.json", "styles.css", "LICENSE", "ATLAS-RUNTIME-PERMISSION.txt", "vendor/atlas.lock.json"])
       await snapshot(entry);
     if (mode === "source") {
       const read = async (file) => JSON.parse(await readFile(path.join(workspace, file), "utf8"));

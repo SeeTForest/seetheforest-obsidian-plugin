@@ -79,7 +79,7 @@ Atlas 已有保护构建不变；没有将 Atlas 私有源码复制到插件仓�
 
 - 正式工作区 Atlas Lock 仍为 0.1.6；完整构建验证只在已授权候选的隔离 consumer 执行。
 - 真实 Obsidian 隔离 Vault 安装、离线、主题、多面板和 GPU/Worker 释放待测。
-- 插件适配层 MIT 已由用户确认并登记根 LICENSE；Atlas 再分发许可及可审查源码交付仍待明确，不自动公开仓库。
+- 插件适配层 MIT 已由用户确认并登记根 LICENSE；2026-10-06 的 `ATLAS-RUNTIME-PERMISSION.txt` 授权合格 Atlas 运行制品随本插件免费分发及安装运行，不授予 Atlas 单独再分发或源码公开权。该文件全文随后续构建的 `main.js` 许可通知携带，不额外增加安装文件。受限源码审核路线已接受，但具体仓库权限和交付方式仍待确认，不自动公开或授权访问。
 - [官方开发者政策](https://docs.obsidian.md/community-directory/developer-policies) 要求披露闭源代码并个案审查，
   禁止为隐藏用途而混淆；三文件技术适配不代表获准上架。
 - 正式 Release、Tag、依赖升级和市场提交都需要独立授权。

@@ -55,6 +55,7 @@ test("manifest, version map, dependency and license drift are rejected", async (
     for (const [name, value] of Object.entries(files)) await writeFile(path.join(dir, name), JSON.stringify(value));
   };
   await writeFile(path.join(dir, "LICENSE"), await readFile(path.join(root, "LICENSE")));
+  await copyFile(path.join(root, "ATLAS-RUNTIME-PERMISSION.txt"), path.join(dir, "ATLAS-RUNTIME-PERMISSION.txt"));
   await save();
   await checkContract(dir);
   for (const [file, key, value] of [["manifest.json", "version", "9.9.9"], ["manifest.json", "isDesktopOnly", false],

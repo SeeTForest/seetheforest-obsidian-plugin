@@ -35,6 +35,17 @@
 `artifacts/validation/select-before-read-20261005/`。Blog 回归和真实 Obsidian 验收分别记录，
 不能用插件自动测试代替。正式源码依赖锁仍为 0.1.6。
 
+2026-10-06 已在 `artifacts/validation/inspector-candidate-20261006/` 用签名
+`0.1.7-obsidian.6-inspector` 完成完整本地 CI（38 项插件测试、12 项 CI 测试、验签、类型检查、
+构建、三文件/离线 VM 检查及打包）。该包已整合正式 Inspector 与宿主接口。
+随后 `.8-initial` 在 `artifacts/validation/initial-candidate-20261006/` 通过同一完整插件管线，
+上游固定未旋转初态生成专项也已通过。最终 `.8` 有界 Blog 原矩阵 18 项中 17 通过，
+剩余搜索项经用户批准修订单条失效用例后，独立评分 21/21、100% 通过，原失败记录保留。
+本轮自动门禁覆盖已闭合，但长拖体验边界继续保留，隔离用例修订尚未进入 Blog 主分支。
+正式依赖未更新；2026-10-06 经用户授权并确认关闭后，固定测试 Vault 已安装该 `.8-initial` 候选，
+三个运行文件哈希通过，笔记与设置保留。真实 Obsidian 未验收，不能将此构建当作正式发行。
+当前状态以生产交付清单和测试记录为准。
+
 2026-09-30 后续已完成社区安装三文件格式的源码适配：签名制品中的 Worker/Wasm 与插件布局
 Worker 随 `main.js` 内嵌，运行时仅创建本地 Blob，不读取额外 `assets/` 或下载依赖。
 三文件隔离验证见本仓库 `artifacts/validation/obsidian-community-package-20260930/`，不能视为已经获市场审核或真实实装通过。
@@ -150,7 +161,8 @@ ZIP 位于其中 `consumer/outputs/seetheforest-atlas-obsidian-0.1.0.zip`。这�
 只持久化必要设置和路径→稳定 ID；正文及可重建图不保存到插件数据或发行包。
 Atlas 是闭源专有组件；插件的目标分发渠道是 Obsidian 社区插件市场。
 2026-10-05 用户明确插件适配层采用 MIT，见根 `LICENSE`；此许可不覆盖 Atlas 与其他第三方代码。
-构建包同时保留各自许可。正式发布前仍需确认 Atlas 再分发许可及市场审核要求，不能通过公开 Atlas 源码绕过该边界。
+构建包同时保留各自许可。2026-10-06 已获得通过验收的 Atlas 运行制品随本插件免费分发、供用户安装运行的有限授权，
+见 [Atlas 插件内分发授权](ATLAS-RUNTIME-PERMISSION.txt)。不包含 Atlas 源码公开或单独再分发权；正式发行仍须完成兼容验收及官方审核。
 Obsidian 社区目录禁止以混淆隐藏用途，闭源代码个案审查；不能承诺已可上架。
 官方来源与核验日期见 [功能对照](docs/native-graph-parity.md)。
 
