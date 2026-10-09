@@ -110,7 +110,8 @@ Build-time dependency retrieval is separate from plugin runtime behavior.
 ## 发行与社区状态
 
 2026-10-10：用户已添加社区条目，官方扫描报告依赖安装失败及若干警告；源码已准备 0.1.1
-修复，完整本地验证记录见 `docs/validation.md`。尚未推送或发布本次修复、未获官方复审通过。
+修复，完整本地验证记录见 `docs/validation.md`。请以当前分支与 Release 页面区分源码提交、
+正式发行和社区审核状态；本地通过不代表官方复审通过。
 
 首个发行版本为 **插件 0.1.0 + Atlas 0.1.7**，仅支持桌面 Obsidian 1.11.7 及以上。
 用户已确认当前本机正式包复验通过；GitHub 发行不代表官方社区目录已收录。

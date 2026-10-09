@@ -3,7 +3,6 @@ import {
   mkdir,
   readFile,
   writeFile,
-  copyFile,
   readdir,
 } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
@@ -11,6 +10,7 @@ import path from "node:path";
 import { verifyAtlas, verifyHostApi, hash } from "./atlas-verification.mjs";
 import { runtimeNotices } from "./runtime-notices.mjs";
 import { inspectReviewPackage } from "./verify-review-inputs.mjs";
+import { normalizeBuildText } from "./build-text.mjs";
 import { COMMUNITY_FILES, embeddedAssetBytes } from "./package-validation.mjs";
 const root = fileURLToPath(new URL("../", import.meta.url));
 const lock = JSON.parse(
@@ -104,7 +104,7 @@ const mainBuild = await build({
   },
   loader: { ".css": "empty" },
 });
-const notices =
+const notices = normalizeBuildText(
   "Plugin integration: seetheforest-obsidian-plugin\n" +
   (await readFile(path.join(root, "LICENSE"), "utf8")) +
   "\n\nLicense scope:\n" +
@@ -114,7 +114,8 @@ const notices =
   "\n\nAtlas proprietary component:\n" +
   verified.read("LICENSE").toString() +
   "\n\n" +
-  (await runtimeNotices(root, [layoutBuild.metafile, mainBuild.metafile]));
+  (await runtimeNotices(root, [layoutBuild.metafile, mainBuild.metafile])),
+);
 if (notices.includes("*/"))
   throw Error("License notice cannot be safely included in the bundle banner");
 const main =
@@ -123,15 +124,15 @@ const main =
 // Verify all three payloads survived bundling byte-for-byte before writing.
 embeddedAssetBytes(main, embeddedAssets);
 await writeFile(path.join(dist, "main.js"), main);
-await copyFile(
-  path.join(root, "manifest.json"),
+await writeFile(
   path.join(dist, "manifest.json"),
+  normalizeBuildText(await readFile(path.join(root, "manifest.json"), "utf8")),
 );
 await writeFile(
   path.join(dist, "styles.css"),
   verified.read("styles.css").toString() +
     "\n" +
-    (await readFile(path.join(root, "styles.css"), "utf8")),
+    normalizeBuildText(await readFile(path.join(root, "styles.css"), "utf8")),
 );
 const files = COMMUNITY_FILES;
 // An existing output is never silently accepted if it has extra files.
