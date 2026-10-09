@@ -1,6 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { LatestJob } from "../src/scheduler.ts";
+import { browserTimers } from "./browser-timers.ts";
+const timers = browserTimers();
+Object.defineProperty(globalThis, "window", { value: timers, configurable: true });
 const tick = () => new Promise((resolve) => setTimeout(resolve, 15));
 test("a slower stale computation never replaces a newer snapshot", async () => {
   const pending: Array<(value: number) => void> = [],
@@ -21,6 +24,7 @@ test("a slower stale computation never replaces a newer snapshot", async () => {
   await tick();
   assert.deepEqual(published, [2]);
   job.dispose();
+  assert.equal(timers.pending.size, 0);
 });
 test("disable cancels pending timers and ignores in-flight completion", async () => {
   let resolve: ((n: number) => void) | undefined;
@@ -62,4 +66,15 @@ test("debounces event bursts and reports recoverable failures once", async () =>
   assert.equal(starts, 1);
   assert.equal(errors, 1);
   job.dispose();
+});
+
+test("disposing a pending debounce clears its browser timer without starting work", async () => {
+  let starts = 0;
+  const job = new LatestJob(async () => ++starts, () => assert.fail(), () => assert.fail(), 0);
+  job.request();
+  assert.equal(timers.pending.size, 1);
+  job.dispose();
+  assert.equal(timers.pending.size, 0);
+  await tick();
+  assert.equal(starts, 0);
 });

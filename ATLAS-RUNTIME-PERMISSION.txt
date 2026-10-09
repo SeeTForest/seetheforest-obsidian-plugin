@@ -11,7 +11,8 @@ run the resulting plugin with these bundled artifacts.
 
 This permission is limited to runtime artifacts that have passed the required
 acceptance checks. It does not authorize publication of Atlas source code or
-standalone redistribution of Atlas. Atlas remains proprietary; the plugin
+standalone redistribution of Atlas except for the narrowly scoped build input
+permission below. Atlas remains proprietary; the plugin
 integration's MIT license does not apply to Atlas. Retain the Atlas license and
 applicable third-party notices with the plugin.
 
@@ -20,3 +21,17 @@ license, within the scope above. It is not evidence of successful acceptance,
 approval by Obsidian, or authorization to perform a release or deployment.
 The actual plugin and Atlas versions and artifact hashes are recorded in the
 corresponding build and acceptance evidence.
+
+Plugin build and review input permission (confirmed 2026-10-10)
+
+SeeTForest additionally authorizes this plugin repository to include the signed,
+compiled Atlas 0.1.7 archive identified by SHA-256
+d17a55b01ac54edb8c346c69c822dfe1b28aa69eb785c3fcde864ce55b8247aa,
+its detached signature and signing public key as publicly downloadable build
+inputs. Users and reviewers may obtain and use these inputs to build, test and
+review this plugin. Copies within this plugin repository and its forks must keep
+these terms and the Atlas license. This exception does not authorize Atlas
+source publication, use in other products or standalone redistribution of Atlas
+outside this plugin's build/review context. It does not grant permission to
+change the protected archive or remove verification. The signing private key
+is never distributed. This permission is not an Obsidian approval.

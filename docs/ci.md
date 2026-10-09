@@ -1,6 +1,48 @@
 # 插件本地验证脚本与按需 CI
 
-更新：2026-10-06。本地脚本为主，GitHub Actions 为可选调用层。验证只针对本插件，不发布、不更新正式 Atlas Lock、不覆盖测试 Vault。
+更新：2026-10-10。本地脚本为主，GitHub Actions 为可选调用层。验证只针对本插件，不发布、不更新正式 Atlas Lock、不覆盖测试 Vault。
+
+## 社区审核修复：无需私有凭据的依赖安装
+
+0.1.0 的公开源码只有 `vendor/atlas.lock.json`，而 npm 依赖引用缺失的
+`file:vendor/atlas.tgz`，因此普通审核环境无法安装依赖。本地完整 CI 曾由维护者提供该包，
+源码 CI 则明确移除该依赖；两者都不证明官方环境可直接安装。
+
+2026-10-10 用户授权在不公开 Atlas 实现源码的前提下，随插件仓库提供固定的签名构建包。
+当前待发布修复将下列四项作为 vendor 唯一 Git 白名单：锁、`atlas.tgz`、`atlas.sig`、
+`atlas-public.pem`。不含私钥；Atlas 源码仓库仍私有，Atlas 版本/哈希不变。
+公开 API `.d.ts` 是签名制品自带的接口声明，不是 TypeScript/TSX/Rust 实现源码。
+闭源不意味着运行代码不可逆向；压缩 JS/Wasm 并非源码保密的绝对保证。
+
+普通干净检出可直接运行：
+
+```sh
+npm run verify:review-inputs
+npm ci --ignore-scripts
+npm run typecheck
+npm test
+npm run build
+npm run verify:package
+```
+
+`verify:review-inputs` 验证既有签名、固定哈希、接口、精确制品白名单、私密路径与调试标记、
+Wasm 调试段。`build` 与 `ci:full` 同样执行此门禁；不修改保护清单，不重新签名。
+此命令不联网、不需要账号；npm 安装公共依赖仍需注册表可达。
+
+仅升级开发类型包 `obsidian` 到 1.13.0；运行最低版本仍是 1.11.7。设置页通过能力检测选择
+1.13+ 声明式渲染或旧宿主回退；重绘由 `requireApiVersion` 保护新 API 调用，
+使用同一行定义和持久化回调，保留 `identities` 数据。
+SolidJS 本体仍锁定 1.9.14，仅对其 `seroval` / `seroval-plugins` 固定覆盖为 1.6.8，
+避开 GHSA-p6vx-979v-rg4c；必须同时跑锁定安装、类型检查、设置与窗口生命周期测试和完整构建。
+本轮不升级 Atlas、Blog 或官网。真实弹出窗口及设置搜索仍需宿主复验。
+
+官方审核说明（核验 2026-10-10）：[扫描与构建](https://docs.obsidian.md/community-directory/faq)、
+[重新审核与分支预检](https://docs.obsidian.md/community-directory/manage-entry)、
+[Seroval 公告](https://github.com/advisories/GHSA-p6vx-979v-rg4c)。
+本地通过后，仍需提交推送、使用 Review branch 预检，获授权发布新版本，再由官方 Request review。
+不覆盖 0.1.0 Tag/资产，不把本地检查称为官方审核通过。
+
+下方私有 Release 下载器为维护者更新未来签名输入的受保护备选，不是当前公共审核的前提。
 
 ## 本地优先：如何调用
 
@@ -9,7 +51,7 @@
 不需要 GitHub 账号、Actions runner 或云端 Secret 才能运行本地验证。
 
 前提：Node.js **24**（含 npm）在 PATH 中；首次安装公共依赖需要访问 npm 注册表；完整验证额外需要系统 `tar`
-以及已批准、与锁一致的 `vendor/atlas.tgz`、`atlas.sig`、`atlas-public.pem`。只验证签名，不读取私钥。
+以及仓库内已批准、与锁一致的 `vendor/atlas.tgz`、`atlas.sig`、`atlas-public.pem`。只验证签名，不读取私钥。
 无需先执行根目录 `npm install` / `npm ci`：脚本在独立副本内安装依赖，源码检查不需要 Atlas 包。
 
 在插件仓库根目录运行，二选一：
@@ -66,7 +108,8 @@ sh scripts/ci.sh full
 
 每次生成 `receipt.json`：开始/结束时间、平台与 Node 版本、阶段成功/失败、实际源码文件哈希、
 插件本仓库 Git 基点与脏状态（若无法可靠确定则为 null）、Atlas 双版本追溯、完整构建的字节清单及 ZIP 哈希。
-白名单源码哈希包括构建脚本、测试、工作流和配置，不包括 README 等非构建输入。
+白名单源码哈希包括构建脚本、测试、工作流、配置、许可范围、README 及 Git 白名单配置；
+README 和白名单现在也是社区预检契约的一部分。
 失败返回非零退出码并保留已完成阶段和本地日志。被终止/超时的进程可能留下 `running`，不能视为通过。
 
 源码管线仅在隔离的 `package.json` 和 npm lock 中移除 Atlas 一项；保留其他包的固定版本与 integrity，

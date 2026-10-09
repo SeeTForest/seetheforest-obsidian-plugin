@@ -67,7 +67,7 @@ export class AtlasRuntime {
         name: "seetheforest-layout",
       });
       const cleanup = () => {
-        clearTimeout(timeout);
+        window.clearTimeout(timeout);
         worker.terminate();
         signal.removeEventListener("abort", abort);
       };
@@ -75,7 +75,7 @@ export class AtlasRuntime {
         cleanup();
         reject(new DOMException("Cancelled", "AbortError"));
       };
-      const timeout = setTimeout(() => {
+      const timeout = window.setTimeout(() => {
         cleanup();
         reject(new Error("布局计算超时，请缩小可见范围后重试。"));
       }, 120000);

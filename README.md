@@ -1,5 +1,75 @@
 # See the Forest Atlas for Obsidian
 
+Explore your notes as an interactive knowledge constellation, directly inside
+Obsidian. See the Forest Atlas uses your Vault's real links to help you discover
+connections, inspect a note, and return to its original content without losing
+your place in the graph.
+
+## Features
+
+- Open the global Atlas from the left ribbon's network icon, or use the command
+  palette. Keyboard shortcuts are optional.
+- Explore a local graph around a note, with depth and link-direction controls.
+- Search and filter notes; manage exclusions and color groups in plugin settings.
+- Select a node to inspect its details. Use the reading action to open the note
+  in Obsidian; selecting a node does not immediately switch tabs.
+- Use independent graph panels and a keyboard-accessible note list.
+- Keep your data local: no telemetry, note uploads, account, subscription,
+  runtime downloads, or remote rendering service.
+
+## Requirements and installation
+
+This release targets **desktop Obsidian 1.11.7 or later**. Mobile is not yet
+supported. Some controls currently use Chinese labels. The plugin complements
+the native Graph view; it does not implement every advanced native Graph option.
+
+The current source prepares **0.1.1** review fixes; the published release remains
+**0.1.0** until a new release is explicitly published. Do not infer installation
+or community approval status from the source version alone.
+
+Until the community review succeeds, download `main.js`, `manifest.json` and
+`styles.css` from the [published release](https://github.com/SeeTForest/seetheforest-obsidian-plugin/releases/latest).
+Place all three in `.obsidian/plugins/seetheforest-atlas/` inside your Vault, then
+enable **See the Forest Atlas** in Community plugins. Close the Vault or disable
+the plugin before upgrading, and preserve `data.json`. GitHub's source-code ZIP
+is not an installation package. This README does not assert community approval.
+
+## License and privacy
+
+The original Obsidian integration is [MIT-licensed](LICENSE). **Atlas is a
+proprietary, closed-source dependency**, not covered by the integration's MIT
+license. The combined `main.js` is not wholly MIT. Read the
+[license scope](LICENSE-SCOPE.txt) and [Atlas permission](ATLAS-RUNTIME-PERMISSION.txt).
+Atlas, Worker, Wasm, styles and license notices are bundled for offline operation.
+The plugin stores settings and stable note identifiers; it does not upload notes.
+
+## Building and reviewing
+
+Use Node.js 24 and system `tar`. The repository includes only the fixed signed
+Atlas **compiled package**, its signature and public key, plus public API types
+inside the package; it does not include Atlas implementation source or source
+maps. These inputs may be used to build and review this plugin under the limited
+permission above. No GitHub token or private repository access is needed for
+dependency installation. Build-time npm access is separate from offline runtime.
+
+```sh
+npm run verify:review-inputs
+npm ci --ignore-scripts
+npm run typecheck
+npm test
+npm run build
+npm run verify:package
+```
+
+For isolated validation use `node scripts/ci.mjs full` (or `source` for the
+public-dependencies-only checks). See [local CI instructions](docs/ci.md).
+Signature verification remains mandatory. Do not treat a successful build as
+visual acceptance or official community approval. Report reproducible problems
+through [GitHub Issues](https://github.com/SeeTForest/seetheforest-obsidian-plugin/issues)
+without attaching private notes, credentials or session cookies.
+
+## 中文使用与工程说明
+
 把当前 Obsidian 笔记库的真实链接网络交给 See the Forest Atlas 显示，在原生工作区中探索并打开笔记。
 不需要见林 Vault 框架、Profile、Codex、网站构建、账号或网络服务。笔记不会被改写或上传。
 
@@ -7,7 +77,7 @@
 
 **插件适配层 MIT，Atlas 为专有闭源依赖。** MIT 仅覆盖本工程原创的 Obsidian 适配代码，
 不覆盖 `@seetheforest/atlas` 或其他第三方代码，也不表示最终组合的 `main.js` 全部采用 MIT。
-Atlas 获准随本插件免费分发并供用户安装运行，不授予 Atlas 源码公开或单独再分发权。
+Atlas 获准随本插件免费分发并供用户安装运行；2026-10-10 增补仅限本插件构建/审核的签名包公开权限，不授予 Atlas 源码公开或其他用途的单独再分发权。
 各自许可证及分发授权全文随安装文件保留，见 [LICENSE](LICENSE) 与 [Atlas 分发授权](ATLAS-RUNTIME-PERMISSION.txt)。
 
 Atlas、两个 Worker、Wasm 和样式随插件安装包提供；已安装插件在本地离线运行，
@@ -38,6 +108,9 @@ Build-time dependency retrieval is separate from plugin runtime behavior.
 制品命名和双版本追溯见 [社区安装制品契约](docs/community-package.md)。
 
 ## 发行与社区状态
+
+2026-10-10：用户已添加社区条目，官方扫描报告依赖安装失败及若干警告；源码已准备 0.1.1
+修复，完整本地验证记录见 `docs/validation.md`。尚未推送或发布本次修复、未获官方复审通过。
 
 首个发行版本为 **插件 0.1.0 + Atlas 0.1.7**，仅支持桌面 Obsidian 1.11.7 及以上。
 用户已确认当前本机正式包复验通过；GitHub 发行不代表官方社区目录已收录。

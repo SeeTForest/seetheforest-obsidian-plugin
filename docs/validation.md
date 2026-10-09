@@ -1,5 +1,46 @@
 # 验证记录与交付闸门
 
+## 2026-10-10 社区审核修复：0.1.1 本地候选
+
+用户已成功提交条目；官方报告依赖安装失败，以及许可识别、定时器、设置搜索、
+Seroval 与英文 README 警告。此记录不是官方复审通过。
+
+修复与边界：
+
+- 公开源码引用 `file:vendor/atlas.tgz`，但 0.1.0 Git 树没有这个文件。此前本地完整 CI
+  人工提供输入、源码 CI 移除 Atlas，均不证明官方普通安装可用。
+- 用户在本次对话批准“不含 Atlas 源码即可”的构建包公开方案。仅放行锁定签名包、公钥、
+  分离签名；生产包的精确白名单与私密/调试扫描通过，Atlas 0.1.7 的 SHA-256 不变。
+  包含编译 JS/Wasm 和公开 `.d.ts`，不包含 TS/TSX/Rust 实现或 Source Map；不承诺无法逆向。
+- 根 LICENSE 恢复标准 MIT；范围声明独立为 `LICENSE-SCOPE.txt`，并与 Atlas 许可、有限
+  构建/审核授权全文一起保留在 main.js。GitHub 识别结果须提交后确认。
+- README 增加前置英文产品说明、安装、许可和构建步骤，保留中文说明与历史。
+- 插件调度与布局超时使用同一 `window` 的浏览器定时器；增加取消与清理测试。
+- 设置定义兼容 1.13+ 搜索；旧宿主使用同一行定义，`requireApiVersion` 保护新 `update()` API。
+  使用既有持久化回调，避免声明式自动保存覆盖包含 `identities` 的数据结构。
+- SolidJS 1.9.14、PixiJS 8.19.0 与 Atlas 锁未升级；仅覆盖 Seroval 两个依赖为 1.6.8。
+  Obsidian 类型包升级 1.13.0，运行最低版本仍 1.11.7。
+
+最终本地证据：
+
+- `artifacts/validation/ci/source-uhuFoq/receipt.json`：source 通过。
+- `artifacts/validation/ci/full-UhqVin/receipt.json`：full 全部阶段通过；源码基点 `6aebe7c`，
+  `dirty: true`（本次修改尚未提交），不是已发布构建。
+- 两条管线均为 42 项插件测试、16 项 CI 测试，0 失败/跳过；完整 lint 0 错误/0 警告；
+  typecheck、锁定安装、构建、三文件验证、离线 VM、合成基准和 ZIP 回读通过。
+- 在 source 隔离副本运行 `npm audit --omit=dev --json`：公共运行依赖漏洞计数 0。
+  该扫描不涵盖 Atlas 内部源码、开发依赖或真实宿主攻击面，不能解释为“完全无漏洞”。
+- 与已发布 0.1.0 的 `full-SKVjle` 回执比较：Atlas 包、内嵌 physics Worker、Wasm、布局 Worker
+  以及 styles.css 哈希全部相同。main.js 因适配层/许可修复变化，manifest 因版本变为 0.1.1 变化。
+- 新 main.js SHA-256：`50528014d3ac88285c72f7ebb58ec7276c5e1da359affd34ffb3c76e7f5bb188`。
+- 首轮 `full-cfmdXO` 因不识别能力检测的 API lint 失败；按官方双版本模式改为版本守卫后修复。
+  中间通过记录 `full-2ECuPH` 保留，最终新增测试以 `full-UhqVin` 为准。
+
+本轮未提交、推送、发布、申请复审、给官方授权私有源码，未覆盖固定测试 Vault。
+真实 Obsidian 的新旧设置页、设置搜索、弹出窗口与关闭清理仍需复验；没有重跑 Blog 视觉回归，
+也没有修改 Atlas/Blog/官网代码或锁。后续需推送后 Review branch，再按授权发布 0.1.1 并 Request review；
+官方可能继续要求说明闭源组件，不用本地成功冒充平台审核结束。
+
 ## 当前测试位置与历史路径迁移（2026-10-05）
 
 唯一活动测试 Vault 为本仓库 `test-vaults/AtlasPlugin-Test/`，从原

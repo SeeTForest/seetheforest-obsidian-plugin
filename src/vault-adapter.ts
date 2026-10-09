@@ -52,7 +52,7 @@ export async function readSnapshot(
     );
     entries.push(...batch);
     // Yield input time without relying on Electron / Node APIs.
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await new Promise<void>((resolve) => window.setTimeout(resolve, 0));
   }
   return {
     linkKinds,

@@ -1,7 +1,7 @@
 /** Debounced, latest-only work. An old asynchronous snapshot cannot publish. */
 export class LatestJob<T> {
   private generation = 0;
-  private timer: ReturnType<typeof setTimeout> | undefined;
+  private timer: number | undefined;
   private disposed = false;
   constructor(
     private compute: (cancelled: () => boolean) => Promise<T>,
@@ -11,9 +11,9 @@ export class LatestJob<T> {
   ) {}
   request(): void {
     if (this.disposed) return;
-    clearTimeout(this.timer);
+    window.clearTimeout(this.timer);
     const generation = ++this.generation;
-    this.timer = setTimeout(() => {
+    this.timer = window.setTimeout(() => {
       void this.run(generation);
     }, this.delay);
   }
@@ -29,6 +29,6 @@ export class LatestJob<T> {
   dispose(): void {
     this.disposed = true;
     this.generation++;
-    clearTimeout(this.timer);
+    window.clearTimeout(this.timer);
   }
 }

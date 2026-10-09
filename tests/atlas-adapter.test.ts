@@ -3,6 +3,60 @@ import assert from "node:assert/strict";
 import { build } from "esbuild";
 import { fileURLToPath } from "node:url";
 
+test("layout timeout and cleanup use the same browser window timer namespace", async () => {
+  const bundled = await build({
+    entryPoints: [fileURLToPath(new URL("../src/atlas-adapter.ts", import.meta.url))],
+    bundle: true, write: false, platform: "node", format: "cjs", target: "node24",
+    external: ["solid-js", "solid-js/web", "@seetheforest/atlas/solid", "./runtime-assets"],
+    define: { __ATLAS_ASSETS__: "{}" },
+  });
+  for (const finish of ["success", "abort", "timeout", "worker-error"] as const) {
+    const timers = new Map<number, () => void>();
+    let cleared = 0;
+    let terminated = 0;
+    let worker: any;
+    const timerWindow = {
+      setTimeout(callback: () => void, delay: number) { assert.equal(delay, 120000); timers.set(41, callback); return 41; },
+      clearTimeout(id: number) { assert.equal(id, 41); cleared++; timers.delete(id); },
+    };
+    class WorkerDouble {
+      constructor() { worker = this; }
+      postMessage() {}
+      terminate() { terminated++; }
+    }
+    const module = { exports: {} as any };
+    const requireDouble = (id: string) => {
+      if (id === "solid-js" || id === "solid-js/web") return {};
+      if (id === "@seetheforest/atlas/solid") return { ATLAS_HOST_API_VERSION: 1 };
+      if (id === "./runtime-assets") return { createRuntimeAssetUrls: () => ({ layoutUrl: "blob:layout", dispose() {} }) };
+      throw Error(id);
+    };
+    const forbiddenGlobalTimer = () => { throw Error("Unexpected non-window timer"); };
+    new Function("require", "module", "exports", "window", "Worker", "setTimeout", "clearTimeout", bundled.outputFiles[0]!.text)(
+      requireDouble, module, module.exports, timerWindow, WorkerDouble, forbiddenGlobalTimer, forbiddenGlobalTimer,
+    );
+    const runtime = new module.exports.AtlasRuntime();
+    await runtime.load();
+    const controller = new AbortController();
+    const preparing = runtime.prepare({ nodes: [], edges: [] }, controller.signal);
+    if (finish === "success") {
+      worker.onmessage({ data: { view: {}, seed: [] } });
+      assert.deepEqual(await preparing, { view: {}, seed: [] });
+    } else {
+      const rejected = assert.rejects(preparing, finish === "abort" ? /Cancelled/ : finish === "timeout" ? /超时/ : /线程不可用/);
+      if (finish === "abort") controller.abort();
+      else if (finish === "timeout") timers.get(41)!();
+      else worker.onerror();
+      await rejected;
+    }
+    controller.abort();
+    assert.equal(terminated, 1);
+    assert.equal(cleared, 1);
+    assert.equal(timers.size, 0);
+    runtime.dispose();
+  }
+});
+
 test("Atlas adapter opts into selection-only nodes and delegates explicit reading unchanged", async () => {
   const bundled = await build({
     entryPoints: [

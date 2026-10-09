@@ -1,0 +1,10 @@
+Scope: the root MIT LICENSE applies to the original Obsidian integration code
+in seetheforest-obsidian-plugin. It does not license @seetheforest/atlas, its
+protected runtime assets, or other third-party dependencies. Atlas remains
+proprietary and is governed by its separately supplied license. Each bundled
+dependency retains its own license; the assembled plugin is not wholly MIT.
+
+vendor/atlas.tgz is a signed, compiled proprietary dependency, not MIT source.
+See ATLAS-RUNTIME-PERMISSION.txt for the limited plugin distribution and build
+permission. The archive includes the Atlas license and public API declarations;
+those declarations do not grant access to or rights in the implementation source.

@@ -55,9 +55,14 @@ test("manifest, version map, dependency and license drift are rejected", async (
     for (const [name, value] of Object.entries(files)) await writeFile(path.join(dir, name), JSON.stringify(value));
   };
   await writeFile(path.join(dir, "LICENSE"), await readFile(path.join(root, "LICENSE")));
+  await copyFile(path.join(root, "LICENSE-SCOPE.txt"), path.join(dir, "LICENSE-SCOPE.txt"));
   await copyFile(path.join(root, "ATLAS-RUNTIME-PERMISSION.txt"), path.join(dir, "ATLAS-RUNTIME-PERMISSION.txt"));
   await save();
   await checkContract(dir);
+  files["package-lock.json"].packages["node_modules/seroval"].version = "1.5.6";
+  await save();
+  await assert.rejects(checkContract(dir), /Unreviewed serialization dependency/);
+  files["package-lock.json"].packages["node_modules/seroval"].version = "1.6.8";
   files["package-lock.json"].packages[`node_modules/${ATLAS}`].license = "MIT";
   await save();
   await assert.rejects(checkContract(dir), /Atlas must retain/);

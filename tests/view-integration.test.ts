@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { build } from "esbuild";
 import { fileURLToPath } from "node:url";
 import { buildGraph, type Snapshot } from "../src/graph.ts";
+import { browserTimers } from "./browser-timers.ts";
 
 // Exercise the real plugin/controller against a deliberately small host double.
 // This is not an Electron, DOM-layout, GPU or actual Obsidian installation test.
@@ -87,6 +88,9 @@ class ControlDouble {
   addOptions(_options: unknown) {
     return this;
   }
+  setPlaceholder(_value: string) { return this; }
+  setButtonText(_value: string) { return this; }
+  onClick(callback: () => void) { this.change = callback; return this; }
 }
 class SettingDouble {
   name = "";
@@ -95,6 +99,12 @@ class SettingDouble {
     this.name = name;
     return this;
   }
+  setDesc(_value: string) { return this; }
+  setHeading() { return this; }
+  addTextArea(callback: (control: ControlDouble) => void) { return this.add(callback); }
+  addText(callback: (control: ControlDouble) => void) { return this.add(callback); }
+  addColorPicker(callback: (control: ControlDouble) => void) { return this.add(callback); }
+  addButton(callback: (control: ControlDouble) => void) { return this.add(callback); }
   addToggle(callback: (control: ControlDouble) => void) {
     return this.add(callback);
   }
@@ -133,7 +143,8 @@ class PluginDouble {
   addCommand(command: { id: string; callback?: () => void }) {
     this.commands.push(command);
   }
-  addSettingTab() {}
+  settingTab: any;
+  addSettingTab(tab: any) { this.settingTab = tab; }
   register() {}
   registerEvent() {}
 }
@@ -199,7 +210,7 @@ const bundled = await build({
   target: "node24",
   external: ["obsidian", "./atlas-adapter", "./vault-adapter"],
 });
-async function fixture(options: { loadData?: () => Promise<unknown>; runtimeLoad?: () => Promise<void>; beforeLoad?: (plugin: any) => void } = {}) {
+async function fixture(options: { modernSettings?: boolean; loadData?: () => Promise<unknown>; runtimeLoad?: () => Promise<void>; beforeLoad?: (plugin: any) => void } = {}) {
   const leaves: any[] = [];
   const reads: boolean[] = [];
   const notices: string[] = [];
@@ -219,10 +230,27 @@ async function fixture(options: { loadData?: () => Promise<unknown>; runtimeLoad
     metadataCache: { on: () => ({}) },
     vault: { on: () => ({}), getAbstractFileByPath: (path: string) => new FileDouble(path) },
   };
+  class LegacySettingsTab {
+    containerEl = new ElementDouble();
+    constructor(public app: unknown, public plugin: unknown) {}
+  }
+  class ModernSettingsTab extends LegacySettingsTab {
+    renders = 0;
+    getSettingDefinitions(): any[] { return []; }
+    update() {
+      this.renders++;
+      this.containerEl.empty();
+      for (const def of this.getSettingDefinitions()) {
+        const row = new SettingDouble(this.containerEl).setName(def.name);
+        if (def.desc) row.setDesc(def.desc);
+        def.render(row);
+      }
+    }
+  }
   const host = {
     Plugin: PluginDouble,
     ItemView: ViewDouble,
-    PluginSettingTab: class {},
+    PluginSettingTab: options.modernSettings ? ModernSettingsTab : LegacySettingsTab,
     Setting: SettingDouble,
     TFile: FileDouble,
     Keymap: {
@@ -232,6 +260,10 @@ async function fixture(options: { loadData?: () => Promise<unknown>; runtimeLoad
     Notice: class { constructor(message: string) { notices.push(message); } },
     Modal: class {},
     Menu: MenuDouble,
+    requireApiVersion: (version: string) => {
+      assert.equal(version, "1.13.0");
+      return options.modernSettings === true;
+    },
   };
   const module = { exports: {} as { default?: any } };
   const requireDouble = (id: string) => {
@@ -246,10 +278,11 @@ async function fixture(options: { loadData?: () => Promise<unknown>; runtimeLoad
       };
     throw Error(`Unexpected runtime dependency: ${id}`);
   };
-  new Function("require", "module", "exports", bundled.outputFiles[0]!.text)(
+  new Function("require", "module", "exports", "window", bundled.outputFiles[0]!.text)(
     requireDouble,
     module,
     module.exports,
+    browserTimers(),
   );
   const plugin = new module.exports.default(app);
   if (options.loadData) plugin.loadData = options.loadData;
@@ -268,6 +301,35 @@ async function fixture(options: { loadData?: () => Promise<unknown>; runtimeLoad
   return { plugin, view, reads, notices, menuEvents, layoutSaves: () => layoutSaves };
 }
 const tick = () => new Promise((resolve) => setTimeout(resolve, 260));
+
+for (const modernSettings of [false, true]) {
+  test(`settings search and persistence preserve the data envelope (modern=${modernSettings})`, async () => {
+    const f = await fixture({ modernSettings });
+    try {
+      const tab = f.plugin.settingTab;
+      const before = f.plugin.saved.length;
+      const definitions = tab.getSettingDefinitions();
+      assert.ok(definitions.some((d: any) => d.name === "排除条件"));
+      assert.ok(definitions.some((d: any) => d.name === "添加颜色分组"));
+      assert.equal(f.plugin.saved.length, before, "Indexing settings must be side-effect free");
+      if (modernSettings) tab.update();
+      else tab.display();
+      assert.equal(tab.renders, modernSettings ? 1 : undefined);
+      await tab.containerEl.settings.get("排除条件").change("path:archive\n\n tag:hidden ");
+      assert.deepEqual(f.plugin.settings.exclusions, ["path:archive", "tag:hidden"]);
+      assert.deepEqual(f.plugin.saved.at(-1).settings.exclusions, ["path:archive", "tag:hidden"]);
+      assert.ok(f.plugin.saved.at(-1).identities, "Settings writes must not erase stable identities");
+      await tab.containerEl.settings.get("添加颜色分组").change();
+      assert.equal(f.plugin.settings.groups.length, 1);
+      assert.ok(tab.getSettingDefinitions().some((d: any) => d.name === "分组 1"));
+      await tab.containerEl.settings.get("分组 1").change(); // remove the group
+      assert.equal(f.plugin.settings.groups.length, 0);
+      await tab.containerEl.settings.get("恢复插件默认设置").change();
+      assert.deepEqual(f.plugin.settings.exclusions, []);
+    } finally { f.plugin.onunload(); }
+  });
+}
+
 const search = (view: any): ElementDouble =>
   view.contentEl.find((el: ElementDouble) => el.tag === "input")!;
 const filters = (view: any): ElementDouble =>

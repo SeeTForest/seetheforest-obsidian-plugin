@@ -42,9 +42,18 @@ export async function checkContract(root) {
   assert.equal(manifest.isDesktopOnly, true, "Mobile requires separate acceptance before changing this guard");
   assert.equal(pkg.license, "MIT");
   assert.equal(pkg.private, true, "Plugin is distributed through Obsidian releases, not npm publication");
+  assert.deepEqual(pkg.overrides?.["solid-js"], { seroval: "1.6.8", "seroval-plugins": "1.6.8" }, "Keep reviewed serialization security overrides pinned");
+  for (const name of ["seroval", "seroval-plugins"]) {
+    const entries = Object.entries(lock.packages).filter(([key]) => key.endsWith(`node_modules/${name}`));
+    assert.ok(entries.length > 0, `Missing security dependency ${name}`);
+    for (const [, entry] of entries) assert.equal(entry.version, "1.6.8", `Unreviewed serialization dependency ${name}`);
+  }
   assert.equal(lock.packages[""].license, "MIT");
   assert.equal(lock.packages[`node_modules/${ATLAS}`].license, "SEE LICENSE IN LICENSE", "Atlas must retain its separate proprietary license, not inherit integration MIT");
-  assert.match(await readFile(path.join(root, "LICENSE"), "utf8"), /Atlas remains\s+proprietary/);
+  const license = await readFile(path.join(root, "LICENSE"), "utf8");
+  assert.match(license, /^MIT License/);
+  assert.ok(license.trimEnd().endsWith("SOFTWARE."), "Keep root MIT license unmodified; scope belongs in LICENSE-SCOPE.txt");
+  assert.match(await readFile(path.join(root, "LICENSE-SCOPE.txt"), "utf8"), /Atlas remains\s+proprietary/);
   const permission = await readFile(path.join(root, "ATLAS-RUNTIME-PERMISSION.txt"), "utf8");
   assert.match(permission, /only as part of this plugin/);
   assert.match(permission, /does not authorize publication of Atlas source code/);

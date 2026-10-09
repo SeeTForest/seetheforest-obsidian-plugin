@@ -1,10 +1,13 @@
 See the Forest Atlas for Obsidian — third-party license summary.
 
-The original Obsidian integration layer is MIT-licensed (see LICENSE).
+The original Obsidian integration layer is MIT-licensed (see LICENSE and
+LICENSE-SCOPE.txt).
 Atlas is proprietary. Its license and ATLAS-RUNTIME-PERMISSION.txt are included
 in the readable license banner of main.js, together with third-party notices.
 Accepted Atlas runtime artifacts may be distributed only inside this plugin
-under that permission. Atlas source publication and standalone redistribution
+under that permission. A separate, narrow exception permits the fixed signed
+compiled archive to accompany this repository for building and reviewing this
+plugin. Atlas source publication and standalone redistribution for other uses
 are not authorized. The combined main.js is not wholly MIT-licensed.
 
 SolidJS — MIT — https://github.com/solidjs/solid/blob/main/LICENSE

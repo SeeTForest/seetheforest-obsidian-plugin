@@ -1,2 +1,5 @@
 scripts/*.sh text eol=lf
 scripts/*.bat text eol=crlf
+vendor/atlas.tgz binary
+vendor/atlas.sig binary
+vendor/atlas-public.pem text eol=lf

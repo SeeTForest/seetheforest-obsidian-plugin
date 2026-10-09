@@ -10,6 +10,7 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { verifyAtlas, verifyHostApi, hash } from "./atlas-verification.mjs";
 import { runtimeNotices } from "./runtime-notices.mjs";
+import { inspectReviewPackage } from "./verify-review-inputs.mjs";
 import { COMMUNITY_FILES, embeddedAssetBytes } from "./package-validation.mjs";
 const root = fileURLToPath(new URL("../", import.meta.url));
 const lock = JSON.parse(
@@ -22,6 +23,7 @@ const verified = await verifyAtlas(
   lock,
 );
 verifyHostApi(verified);
+inspectReviewPackage(verified);
 // Check that bundling consumes exactly the independently verified package.
 for (const [name, digest] of Object.entries(verified.protection.files)) {
   if (
@@ -105,6 +107,8 @@ const mainBuild = await build({
 const notices =
   "Plugin integration: seetheforest-obsidian-plugin\n" +
   (await readFile(path.join(root, "LICENSE"), "utf8")) +
+  "\n\nLicense scope:\n" +
+  (await readFile(path.join(root, "LICENSE-SCOPE.txt"), "utf8")) +
   "\n\nAtlas plugin distribution permission:\n" +
   (await readFile(path.join(root, "ATLAS-RUNTIME-PERMISSION.txt"), "utf8")) +
   "\n\nAtlas proprietary component:\n" +

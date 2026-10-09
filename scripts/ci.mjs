@@ -91,7 +91,7 @@ try {
     } catch { /* exported source: hashes, not a guessed parent-repository commit */ }
   });
   await phase("snapshot", async () => {
-    for (const entry of ["src", "scripts", "tests", ".github", "package.json", "package-lock.json", "tsconfig.json", "eslint.config.mjs", "eslint.source.config.mjs", "manifest.json", "versions.json", "styles.css", "LICENSE", "ATLAS-RUNTIME-PERMISSION.txt", "vendor/atlas.lock.json"])
+    for (const entry of ["src", "scripts", "tests", ".github", ".gitignore", ".gitattributes", "README.md", "package.json", "package-lock.json", "tsconfig.json", "eslint.config.mjs", "eslint.source.config.mjs", "manifest.json", "versions.json", "styles.css", "LICENSE", "LICENSE-SCOPE.txt", "ATLAS-RUNTIME-PERMISSION.txt", "vendor/atlas.lock.json"])
       await snapshot(entry);
     if (mode === "source") {
       const read = async (file) => JSON.parse(await readFile(path.join(workspace, file), "utf8"));
@@ -106,6 +106,8 @@ try {
     for (const name of ["atlas.tgz", "atlas.sig", "atlas-public.pem"])
       await copyFile(path.join(root, "vendor", name), path.join(workspace, "vendor", name));
     const verified = await verifyAtlas(...["atlas.tgz", "atlas.sig", "atlas-public.pem"].map((name) => path.join(workspace, "vendor", name)), lock);
+    const { inspectReviewPackage } = await import("./verify-review-inputs.mjs");
+    inspectReviewPackage(verified);
     receipt.atlas.signatureVerified = true;
     receipt.atlas.sourceCommit = verified.protection.sourceCommit;
     verifyHostApi(verified);

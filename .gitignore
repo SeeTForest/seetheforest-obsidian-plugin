@@ -1,6 +1,9 @@
 node_modules/
 vendor/*
 !vendor/atlas.lock.json
+!vendor/atlas.tgz
+!vendor/atlas.sig
+!vendor/atlas-public.pem
 outputs/
 artifacts/
 test-vaults/

@@ -8,6 +8,7 @@ import {
   Notice,
   Modal,
   Menu,
+  requireApiVersion,
   type App,
   type WorkspaceLeaf,
   type ViewStateResult,
@@ -675,76 +676,111 @@ class ForestSettings extends PluginSettingTab {
     super(app, plugin);
   }
   display(): void {
+    // Legacy fallback; 1.13+ bypasses display() and renders the definitions.
+    this.renderLegacySettings();
+  }
+  private refreshSettings(): void {
+    if (requireApiVersion("1.13.0")) {
+      this.update();
+    } else {
+      this.renderLegacySettings();
+    }
+  }
+  private renderLegacySettings(): void {
     this.containerEl.empty();
-    this.containerEl.createEl("p", {
-      text: "所有笔记只在当前设备读取。Atlas 保留黑曜石星图视觉；原生 Graph 功能对照见插件 README。",
-    });
-    new Setting(this.containerEl)
-      .setName("排除条件")
-      .setDesc(
-        "每行一个搜索条件。Obsidian 内部排除设置没有稳定公共 API；请在此显式设置。",
-      )
-      .addTextArea((area) =>
-        area
-          .setValue(this.plugin.settings.exclusions.join("\n"))
-          .onChange(async (value) => {
-            this.plugin.settings.exclusions = value
-              .split("\n")
-              .map((x) => x.trim())
-              .filter(Boolean);
-            await this.plugin.persist();
-            this.plugin.refresh();
-          }),
-      );
-    new Setting(this.containerEl).setName("颜色分组（第一个匹配条件优先）").setHeading();
-    this.plugin.settings.groups.forEach((group, index) => {
-      new Setting(this.containerEl)
-        .setName(`分组 ${index + 1}`)
-        .addText((text) =>
-          text
-            .setPlaceholder("例如 tag:学习")
-            .setValue(group.query)
-            .onChange(async (value) => {
-              group.query = value;
+    for (const definition of this.getSettingDefinitions()) {
+      const row = new Setting(this.containerEl).setName(definition.name);
+      if (definition.desc) row.setDesc(definition.desc);
+      definition.render(row);
+    }
+  }
+  getSettingDefinitions(): Array<{
+    name: string;
+    desc?: string;
+    render: (row: Setting) => void;
+  }> {
+    // Render callbacks preserve our nested data envelope and refresh semantics.
+    // Do not use automatic setting writes: data.json also contains identities.
+    return [
+      {
+        name: "隐私与离线运行",
+        desc: "所有笔记只在当前设备读取。Atlas 保留黑曜石星图视觉；原生 Graph 功能对照见插件 README。",
+        render: () => {},
+      },
+      {
+        name: "排除条件",
+        desc: "每行一个搜索条件。Obsidian 内部排除设置没有稳定公共 API；请在此显式设置。",
+        render: (row) => {
+          row.addTextArea((area) =>
+            area.setValue(this.plugin.settings.exclusions.join("\n"))
+              .onChange(async (value) => {
+                this.plugin.settings.exclusions = value
+                  .split("\n")
+                  .map((x) => x.trim())
+                  .filter(Boolean);
+                await this.plugin.persist();
+                this.plugin.refresh();
+              }),
+          );
+        },
+      },
+      {
+        name: "颜色分组（第一个匹配条件优先）",
+        render: (row) => { row.setHeading(); },
+      },
+      ...this.plugin.settings.groups.map((group, index) => ({
+        name: `分组 ${index + 1}`,
+        render: (row: Setting) => {
+          row.addText((text) =>
+            text.setPlaceholder("例如 tag:学习")
+              .setValue(group.query)
+              .onChange(async (value) => {
+                group.query = value;
+                await this.plugin.persist();
+                this.plugin.refresh();
+              }),
+          ).addColorPicker((picker) =>
+            picker.setValue(group.color).onChange(async (value) => {
+              group.color = value;
               await this.plugin.persist();
               this.plugin.refresh();
             }),
-        )
-        .addColorPicker((picker) =>
-          picker.setValue(group.color).onChange(async (value) => {
-            group.color = value;
-            await this.plugin.persist();
-            this.plugin.refresh();
-          }),
-        )
-        .addButton((button) =>
-          button.setButtonText("移除").onClick(async () => {
-            this.plugin.settings.groups.splice(index, 1);
-            await this.plugin.persist();
-            this.plugin.refresh();
-            this.display();
-          }),
-        );
-    });
-    new Setting(this.containerEl).addButton((button) =>
-      button.setButtonText("添加颜色分组").onClick(async () => {
-        this.plugin.settings.groups.push({ query: "", color: "#92b0c8" });
-        await this.plugin.persist();
-        this.display();
-      }),
-    );
-    new Setting(this.containerEl)
-      .setName("恢复插件默认设置")
-      .setDesc(
-        "重置排除条件、颜色分组与新面板默认值；不改变已打开面板的独立范围。",
-      )
-      .addButton((button) =>
-        button.setButtonText("恢复").onClick(async () => {
-          this.plugin.settings = normalizeSettings(DEFAULTS);
-          await this.plugin.persist();
-          this.plugin.refresh();
-          this.display();
-        }),
-      );
+          ).addButton((button) =>
+            button.setButtonText("移除").onClick(async () => {
+              this.plugin.settings.groups.splice(index, 1);
+              await this.plugin.persist();
+              this.plugin.refresh();
+              this.refreshSettings();
+            }),
+          );
+        },
+      })),
+      {
+        name: "添加颜色分组",
+        render: (row) => {
+          row.addButton((button) =>
+            button.setButtonText("添加颜色分组").onClick(async () => {
+              this.plugin.settings.groups.push({ query: "", color: "#92b0c8" });
+              await this.plugin.persist();
+              this.refreshSettings();
+            }),
+          );
+        },
+      },
+      {
+        name: "恢复插件默认设置",
+        desc: "重置排除条件、颜色分组与新面板默认值；不改变已打开面板的独立范围。",
+        render: (row) => {
+          row.addButton((button) =>
+            button.setButtonText("恢复").onClick(async () => {
+              this.plugin.settings = normalizeSettings(DEFAULTS);
+              await this.plugin.persist();
+              this.plugin.refresh();
+              this.refreshSettings();
+            }),
+          );
+        },
+      },
+    ];
   }
 }
