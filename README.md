@@ -23,11 +23,11 @@ This release targets **desktop Obsidian 1.11.7 or later**. Mobile is not yet
 supported. Some controls currently use Chinese labels. The plugin complements
 the native Graph view; it does not implement every advanced native Graph option.
 
-The current source prepares **0.1.1** review fixes; the published release remains
-**0.1.0** until a new release is explicitly published. Do not infer installation
-or community approval status from the source version alone.
+The current source is **0.1.2**, adding initialization feedback for large graphs.
+Atlas remains pinned to **0.1.7**. Release assets and the community listing have
+independent update/review states; a source version alone does not confirm either.
 
-Until the community review succeeds, download `main.js`, `manifest.json` and
+If the plugin is not available in your client's community search, download `main.js`, `manifest.json` and
 `styles.css` from the [published release](https://github.com/SeeTForest/seetheforest-obsidian-plugin/releases/latest).
 Place all three in `.obsidian/plugins/seetheforest-atlas/` inside your Vault, then
 enable **See the Forest Atlas** in Community plugins. Close the Vault or disable
@@ -109,14 +109,15 @@ Build-time dependency retrieval is separate from plugin runtime behavior.
 
 ## 发行与社区状态
 
-2026-10-10：用户已添加社区条目，官方扫描报告依赖安装失败及若干警告；源码已准备 0.1.1
-修复，完整本地验证记录见 `docs/validation.md`。请以当前分支与 Release 页面区分源码提交、
-正式发行和社区审核状态；本地通过不代表官方复审通过。
+2026-10-11：0.1.1 已正式发行，用户已完成社区条目 Publish，
+[公开条目](https://community.obsidian.md/plugins/seetheforest-atlas) 已可访问；客户端搜索可见性另行确认。
+当前源码 0.1.2 增加大图初始化提示，Atlas 仍为 0.1.7；验证范围见 `docs/validation.md`。
+以 Release 页面确认可下载版本，以社区条目确认审核状态，不把本地测试当成新版官方复审通过。
 
 首个发行版本为 **插件 0.1.0 + Atlas 0.1.7**，仅支持桌面 Obsidian 1.11.7 及以上。
 用户已确认当前本机正式包复验通过；GitHub 发行不代表官方社区目录已收录。
 发行入口：[0.1.0 Release](https://github.com/SeeTForest/seetheforest-obsidian-plugin/releases/tag/0.1.0)。
-在正式获目录收录前，可按下文手动安装三个 Release 附件；不要将 GitHub 自动生成的 Source code 压缩包当作安装包。
+客户端尚搜不到时，可按下文手动安装三个 Release 附件；不要将 GitHub 自动生成的 Source code 压缩包当作安装包。
 全局/局部星图、搜索过滤、选择后阅读及离线运行已提供；移动端、原生 Graph 的完整高级参数面板尚未支持。
 复杂拖动可能需要超过 15 秒归静，未通过缩短计算路径改变物理行为。
 
@@ -260,6 +261,11 @@ npm run package
 其他面板需要的本地正文索引；正文不会进入工作区状态。此行为已有宿主替身自动测试，仍待实装验证。
 
 ### 面板布局（当前源码）
+
+0.1.2 的加载提示：首次布局显示当前范围的节点/关系总数、实际等待时间，
+区分“正在计算完整星图布局”和“正在初始化星图显示”。大图较慢时说明可继续等待，不显示虚构百分比。
+收到渲染器与物理初始化就绪信号后收起提示；错误提供重新读取指引。卡片不抢焦点、不拦截操作，
+不删减节点，不改变 Atlas 数学、物理或视觉交互；新提示的真实宿主验收仍待完成。
 
 搜索与重新读取位于顶部。宽面板右侧集中放置“范围与过滤”和“笔记列表”，左侧优先留给星图；
 控制栏独立滚动，两个分区均可折叠。面板宽度不超过 760px 时上下排列，限制控制区高度以保留星图空间。

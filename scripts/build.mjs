@@ -24,6 +24,11 @@ const verified = await verifyAtlas(
 );
 verifyHostApi(verified);
 inspectReviewPackage(verified);
+// This host-only readiness observer is deliberately pinned, not a public Atlas API.
+// Fail a future dependency upgrade if its signal disappears; never hide loading
+// just because render() returned or a guessed timeout elapsed.
+if (!verified.read("solid.js").toString().includes("data-physics-ready"))
+  throw Error("Atlas readiness signal missing; review the plugin readiness adapter before upgrading");
 // Check that bundling consumes exactly the independently verified package.
 for (const [name, digest] of Object.entries(verified.protection.files)) {
   if (

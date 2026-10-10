@@ -14,6 +14,8 @@ import {
   type ViewStateResult,
 } from "obsidian";
 import { AtlasRuntime } from "./atlas-adapter";
+import { afterLoadingPaint, watchAtlasReady } from "./atlas-readiness";
+import { LoadingStatus } from "./loading-status";
 import {
   buildGraph,
   Identities,
@@ -214,6 +216,7 @@ class ForestView extends ItemView {
   private rendered = "";
   private reader?: WorkspaceLeaf;
   private layoutAbort?: AbortController;
+  private loading?: LoadingStatus;
   constructor(
     leaf: WorkspaceLeaf,
     private plugin: ForestPlugin,
@@ -375,7 +378,9 @@ class ForestView extends ItemView {
     this.registerDomEvent(details, "toggle", () => {
       if (details.open) this.renderText();
     });
-    this.stage = workspace.createDiv({ cls: "stf-atlas-host" });
+    const frame = workspace.createDiv({ cls: "stf-atlas-frame" });
+    this.stage = frame.createDiv({ cls: "stf-atlas-host" });
+    this.loading = new LoadingStatus(frame, this.status);
     this.refresh();
   }
   async onClose(): Promise<void> {
@@ -398,12 +403,14 @@ class ForestView extends ItemView {
     this.layoutAbort?.abort();
     this.layoutAbort = undefined;
     this.rendered = "";
+    this.loading?.stop();
     this.status?.setText("正在更新本面板的筛选…");
     this.plugin.refresh();
   }
   release(): void {
     this.layoutAbort?.abort();
     this.layoutAbort = undefined;
+    this.loading?.stop();
     this.mounted?.dispose();
     this.mounted = undefined;
     this.rendered = "";
@@ -425,6 +432,12 @@ class ForestView extends ItemView {
     }
   }
   showError(): void {
+    if (this.plugin.ready && this.plugin.error && this.stage) {
+      this.layoutAbort?.abort();
+      this.rendered = "";
+      this.loading?.fail(this.plugin.error);
+      return;
+    }
     this.status?.setText(this.plugin.error);
   }
   private projection(): ContentGraph | undefined {
@@ -452,9 +465,6 @@ class ForestView extends ItemView {
     }
     try {
       const graph = this.projection()!;
-      this.status?.setText(
-        `${this.local ? `局部：${this.centerPath || "请选择笔记"} · ` : ""}${graph.nodes.length} 个节点 · ${graph.edges.length} 条关系`,
-      );
       const groupTests = this.plugin.settings.groups
         .filter((g) => g.query.trim())
         .map((g) => ({ ...g, test: compileSearch(g.query) }));
@@ -469,17 +479,19 @@ class ForestView extends ItemView {
       this.rendered = fingerprint;
       if (!graph.nodes.length) {
         this.release();
+        this.status?.setText("0 个节点 · 0 条关系");
         this.stage.setText("当前范围没有节点，请调整过滤条件或选择笔记。");
       } else {
         this.layoutAbort?.abort();
         const controller = new AbortController();
         this.layoutAbort = controller;
-        this.status?.setText(
-          `正在准备 ${graph.nodes.length} 个节点的完整星图…`,
-        );
+        this.loading?.begin(graph.nodes.length, graph.edges.length, Boolean(this.mounted));
         void this.plugin.runtime
           .prepare(graph, controller.signal)
-          .then((prepared) => {
+          .then(async (prepared) => {
+            if (controller.signal.aborted || !this.stage) return;
+            this.loading?.setPhase("display");
+            await afterLoadingPaint(this.stage, controller.signal);
             if (controller.signal.aborted || !this.stage) return;
             if (this.mounted) this.mounted.update(graph, prepared.seed, colors);
             else {
@@ -495,14 +507,17 @@ class ForestView extends ItemView {
                 (node, event) => this.contextMenu(node, event),
               );
             }
-            this.status?.setText(
-              `${graph.nodes.length} 个节点 · ${graph.edges.length} 条关系`,
-            );
+            watchAtlasReady(this.stage, controller.signal, () => {
+              this.loading?.stop();
+              this.status?.setText(
+                `${graph.nodes.length} 个节点 · ${graph.edges.length} 条关系`,
+              );
+            });
           })
           .catch((error) => {
             if (!controller.signal.aborted) {
               this.rendered = "";
-              this.status?.setText(
+              this.loading?.fail(
                 error instanceof Error ? error.message : "星图准备失败，请重试",
               );
             }
@@ -510,7 +525,9 @@ class ForestView extends ItemView {
       }
       if (this.text?.parentElement?.hasAttribute("open")) this.renderText();
     } catch (error) {
-      this.status?.setText(
+      this.rendered = "";
+      this.layoutAbort?.abort();
+      this.loading?.fail(
         error instanceof Error ? error.message : "无法显示星图",
       );
     }

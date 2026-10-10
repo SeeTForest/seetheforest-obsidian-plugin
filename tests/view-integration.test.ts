@@ -18,6 +18,8 @@ class ElementDouble {
   attributes: Record<string, string> = {};
   parentElement?: ElementDouble;
   ownerDocument = {};
+  displayReady = false;
+  querySelector() { return this.displayReady ? {} : null; }
   getBoundingClientRect() { return { left: 20, bottom: 80 }; }
   constructor(
     public tag = "div",
@@ -339,6 +341,82 @@ const control = (view: any, name: string): ControlDouble =>
     .find((el) => el.settings.has(name))!
     .settings.get(name)!;
 
+test("large graph loading survives mount until readiness without losing nodes or resetting on identical refresh", async () => {
+  const f = await fixture();
+  try {
+    const count = 4355;
+    f.plugin.index = buildGraph({ files: Array.from({ length: count }, (_, i) => ({
+      ...snapshot.files[0]!, path: `Synthetic/${i}.md`, title: `Note ${i}`,
+    })), resolved: {}, unresolved: {} }, f.plugin.ids);
+    let complete!: (prepared: unknown) => void;
+    let received: any;
+    let mounts = 0;
+    f.plugin.runtime.prepare = (graph: unknown) => {
+      received = graph;
+      return new Promise((resolve) => { complete = resolve; });
+    };
+    f.plugin.runtime.mount = (_stage: unknown, graph: unknown, prepared: unknown) => {
+      assert.equal(graph, received, "Pass the full unchanged graph to Atlas");
+      assert.equal((prepared as any).seed.length, count);
+      mounts++;
+      return { dispose() {}, update() { assert.fail("Unexpected update"); } };
+    };
+    const view = await f.view();
+    const find = (cls: string) => view.contentEl.find((el: ElementDouble) => el.cls === cls)!;
+    assert.equal(received.nodes.length, count);
+    assert.equal(find("stf-loading").hidden, false);
+    assert.match(find("stf-status").text, /计算/);
+    view.refresh(false);
+    assert.match(find("stf-status").text, /计算/, "Identical refresh must not erase progress");
+    complete({ view: {}, seed: Array.from({ length: count }, () => ({})) });
+    await new Promise((resolve) => setTimeout(resolve, 35));
+    assert.equal(mounts, 1);
+    assert.match(find("stf-status").text, /初始化/);
+    assert.equal(find("stf-loading").hidden, false, "render() return is not readiness");
+    find("stf-atlas-host").displayReady = true;
+    await new Promise((resolve) => setTimeout(resolve, 550));
+    assert.equal(find("stf-loading").hidden, true);
+    assert.equal(find("stf-atlas-frame").attributes["aria-busy"], "false");
+    assert.match(find("stf-status").text, /4355 个节点/);
+  } finally { f.plugin.onunload(); }
+});
+
+test("cancelled preparation cannot clear a replacement's message or mount after close", async () => {
+  const f = await fixture();
+  try {
+    const jobs: Array<{ resolve: (value: unknown) => void; reject: (error: Error) => void }> = [];
+    let mounts = 0;
+    f.plugin.runtime.prepare = () => new Promise((resolve, reject) => jobs.push({ resolve, reject }));
+    f.plugin.runtime.mount = () => { mounts++; return { dispose() {} }; };
+    const view = await f.view();
+    control(view, "标签").change(true); // no graph change, no unnecessary restart
+    view.rendered = ""; view.refresh();
+    const panel = view.contentEl.find((el: ElementDouble) => el.cls === "stf-loading")!;
+    jobs[0]!.reject(Error("stale failure"));
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    assert.equal(panel.hidden, false);
+    await view.onClose();
+    jobs.at(-1)!.resolve({ view: {}, seed: [] });
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    assert.equal(panel.hidden, true);
+    assert.equal(mounts, 0);
+  } finally { f.plugin.onunload(); }
+});
+
+test("preparation failure keeps readable retry guidance and releases the loading timer", async () => {
+  const f = await fixture();
+  try {
+    f.plugin.runtime.prepare = () => Promise.reject(Error("布局计算超时"));
+    const view = await f.view();
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    const find = (cls: string) => view.contentEl.find((el: ElementDouble) => el.cls === cls)!;
+    assert.equal(find("stf-loading").hidden, false);
+    assert.match(find("stf-loading-title").text, /未完成/);
+    assert.match(find("stf-loading-hint").text, /重新读取/);
+    assert.equal(find("stf-atlas-frame").attributes["aria-busy"], "false");
+  } finally { f.plugin.onunload(); }
+});
+
 test("keyboard note menu uses the focused row's document and file-menu public event", async () => {
   const f = await fixture();
   try {
@@ -429,7 +507,8 @@ test("unload releases the view but does not detach the user's workspace leaves",
   const view = await f.view();
   let releases = 0;
   let detaches = 0;
-  view.release = () => { releases++; };
+  const release = view.release.bind(view);
+  view.release = () => { releases++; release(); };
   f.plugin.app.workspace.detachLeavesOfType = () => { detaches++; };
   f.plugin.onunload();
   assert.equal(releases, 1);
@@ -616,7 +695,8 @@ test("sidebar groups controls and exposes local options only in a local graph", 
     assert.equal(find("stf-scope").text, "全局星图");
     assert.equal(find("stf-filters").parentElement, find("stf-sidebar"));
     assert.equal(find("stf-text").parentElement, find("stf-sidebar"));
-    assert.equal(find("stf-atlas-host").parentElement, find("stf-workspace"));
+    assert.equal(find("stf-atlas-host").parentElement, find("stf-atlas-frame"));
+    assert.equal(find("stf-atlas-frame").parentElement, find("stf-workspace"));
     await view.setState(
       { local: true, centerPath: "A.md", options: { depth: 3 } },
       {},

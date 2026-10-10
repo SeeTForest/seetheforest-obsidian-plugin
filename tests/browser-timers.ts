@@ -2,7 +2,7 @@
 export function browserTimers() {
   let next = 0;
   const pending = new Map<number, ReturnType<typeof setTimeout>>();
-  return {
+  const timers = {
     pending,
     setTimeout(callback: () => void, delay = 0) {
       const id = ++next;
@@ -12,5 +12,12 @@ export function browserTimers() {
     clearTimeout(id?: number) {
       if (id !== undefined) { clearTimeout(pending.get(id)); pending.delete(id); }
     },
+  };
+  return {
+    ...timers,
+    requestAnimationFrame(callback: FrameRequestCallback) {
+      return timers.setTimeout(() => callback(performance.now()), 0);
+    },
+    cancelAnimationFrame(id: number) { timers.clearTimeout(id); },
   };
 }

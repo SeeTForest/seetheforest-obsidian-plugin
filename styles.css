@@ -255,8 +255,48 @@
   overflow: auto;
   scrollbar-gutter: stable;
 }
-.stf-workspace > .stf-atlas-host {
+.stf-atlas-frame {
   grid-area: atlas;
+  position: relative;
+  display: flex;
+  min-width: 0;
+  min-height: 340px;
+}
+.stf-loading {
+  position: absolute;
+  z-index: 5;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  pointer-events: none;
+}
+.stf-loading[hidden] {
+  display: none;
+}
+.stf-loading[data-updating="true"] {
+  place-items: end start;
+}
+.stf-loading-card {
+  width: min(100%, 380px);
+  padding: 20px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 10px;
+  background: var(--background-primary);
+  color: var(--text-normal);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.stf-loading-title {
+  font-size: 15px;
+}
+.stf-loading-card p {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.stf-loading-elapsed {
+  font-variant-numeric: tabular-nums;
 }
 .stf-sidebar > details {
   background: var(--background-secondary);
