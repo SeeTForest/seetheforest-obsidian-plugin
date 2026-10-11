@@ -102,3 +102,15 @@ test("inherited options are not trusted workspace values", () => {
   );
   assert.equal(normalizeViewOptions(Object.create({ tags: true })).tags, false);
 });
+
+test("title visibility is opt-out, validated, per view and persisted without changing shared settings", () => {
+  assert.equal(restoreViewState({}).options.showTitles, true);
+  assert.equal(normalizeViewOptions({ showTitles: "false" }).showTitles, true);
+  assert.equal(normalizeViewOptions(Object.create({ showTitles: false })).showTitles, true);
+  const hidden = restoreViewState({ options: { showTitles: false } });
+  assert.equal(hidden.options.showTitles, false);
+  assert.deepEqual(restoreViewState(JSON.parse(JSON.stringify(hidden))), hidden);
+  assert.equal(restoreViewState({}).options.showTitles, true);
+  assert.equal(normalizeViewOptions({}, { showTitles: false }).showTitles, false);
+  assert.equal("showTitles" in normalizeSettings({ showTitles: false }), false);
+});

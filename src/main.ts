@@ -316,6 +316,23 @@ class ForestView extends ItemView {
         });
       });
     }
+    const appearance = controls.createDiv({ cls: "stf-filter-group" });
+    appearance.createEl("h3", { text: "星图外观" });
+    new Setting(appearance)
+      .setName("显示标题")
+      .setDesc("显示节点标题与分区名称。关闭后仍可悬停预览、选择节点或从笔记列表阅读。")
+      .addToggle((toggle) => {
+        toggle.setValue(this.options.showTitles).onChange((showTitles) => {
+          this.options = normalizeViewOptions({ ...this.options, showTitles });
+          this.syncControls.forEach((sync) => sync());
+          this.app.workspace.requestSaveLayout();
+          // Presentation only: do not index, prepare, update or remount Atlas.
+        });
+        this.syncControls.push(() => {
+          toggle.setValue(this.options.showTitles);
+          this.stage?.setAttribute("data-show-titles", String(this.options.showTitles));
+        });
+      });
     const localControls = controls.createDiv({ cls: "stf-local-controls" });
     localControls.createEl("h3", { text: "局部探索" });
     this.syncControls.push(() => {

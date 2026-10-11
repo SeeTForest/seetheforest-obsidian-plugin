@@ -381,6 +381,41 @@ test("large graph loading survives mount until readiness without losing nodes or
   } finally { f.plugin.onunload(); }
 });
 
+test("title toggle is local presentation only, persists and does not restart even pending layout", async () => {
+  const f = await fixture();
+  try {
+    let prepares = 0;
+    f.plugin.runtime.prepare = () => { prepares++; return new Promise(() => {}); };
+    const first = await f.view();
+    const second = await f.view();
+    const stage = (view: any) => view.contentEl.find((el: ElementDouble) => el.cls === "stf-atlas-host")!;
+    assert.equal(stage(first).attributes["data-show-titles"], "true");
+    const before = prepares;
+    const saves = f.layoutSaves();
+    const signal = first.layoutAbort.signal;
+    const fingerprint = first.rendered;
+    // Any attempt to rebuild or update Atlas on toggling must fail this test.
+    first.mounted = { update() { assert.fail("Title toggles must not update Atlas"); }, dispose() {} };
+    control(first, "显示标题").change(false);
+    assert.equal(stage(first).attributes["data-show-titles"], "false");
+    assert.equal(stage(second).attributes["data-show-titles"], "true");
+    assert.equal(first.getState().options.showTitles, false);
+    assert.equal(f.layoutSaves(), saves + 1);
+    assert.equal(prepares, before);
+    assert.equal(signal.aborted, false);
+    assert.equal(first.rendered, fingerprint);
+    first.refresh(false);
+    assert.equal(prepares, before, "Same graph refresh preserves layout while titles are hidden");
+    const reopened = await f.view(JSON.parse(JSON.stringify(first.getState())));
+    assert.equal(stage(reopened).attributes["data-show-titles"], "false");
+    assert.equal(control(reopened, "显示标题").value, false);
+    control(first, "显示标题").change(true);
+    assert.equal(stage(first).attributes["data-show-titles"], "true");
+    assert.equal(stage(reopened).attributes["data-show-titles"], "false");
+    assert.equal(f.reads.length, 0, "Presentation toggle must not read or re-index notes");
+  } finally { f.plugin.onunload(); }
+});
+
 test("cancelled preparation cannot clear a replacement's message or mount after close", async () => {
   const f = await fixture();
   try {

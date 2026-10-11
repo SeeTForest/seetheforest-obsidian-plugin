@@ -14,6 +14,8 @@ your place in the graph.
 - Select a node to inspect its details. Use the reading action to open the note
   in Obsidian; selecting a node does not immediately switch tabs.
 - Use independent graph panels and a keyboard-accessible note list.
+- Toggle graph titles and region names per panel to see the network without text
+  labels; hover previews, the reading card and the note list remain available.
 - Keep your data local: no telemetry, note uploads, account, subscription,
   runtime downloads, or remote rendering service.
 
@@ -23,7 +25,7 @@ This release targets **desktop Obsidian 1.11.7 or later**. Mobile is not yet
 supported. Some controls currently use Chinese labels. The plugin complements
 the native Graph view; it does not implement every advanced native Graph option.
 
-The current source is **0.1.2**, adding initialization feedback for large graphs.
+The current source is **0.1.3**, adding per-panel title visibility controls.
 Atlas remains pinned to **0.1.7**. Release assets and the community listing have
 independent update/review states; a source version alone does not confirm either.
 
@@ -111,7 +113,8 @@ Build-time dependency retrieval is separate from plugin runtime behavior.
 
 2026-10-11：0.1.1 已正式发行，用户已完成社区条目 Publish，
 [公开条目](https://community.obsidian.md/plugins/seetheforest-atlas) 已可访问；客户端搜索可见性另行确认。
-当前源码 0.1.2 增加大图初始化提示，Atlas 仍为 0.1.7；验证范围见 `docs/validation.md`。
+0.1.2 已发行并增加大图初始化提示；当前源码 0.1.3 增加独立面板标题开关，
+Atlas 仍为 0.1.7；验证范围见 `docs/validation.md`。
 以 Release 页面确认可下载版本，以社区条目确认审核状态，不把本地测试当成新版官方复审通过。
 
 首个发行版本为 **插件 0.1.0 + Atlas 0.1.7**，仅支持桌面 Obsidian 1.11.7 及以上。
@@ -261,6 +264,10 @@ npm run package
 其他面板需要的本地正文索引；正文不会进入工作区状态。此行为已有宿主替身自动测试，仍待实装验证。
 
 ### 面板布局（当前源码）
+
+0.1.3 新增：右侧「范围与过滤 → 星图外观 → 显示标题」可隐藏画布上的节点标题和分区名称。
+默认开启，每个面板独立记忆；关闭后仍保留悬停预览、详情卡片、阅读入口和笔记列表。
+此开关仅控制文字可见性，不重新索引、重建布局、删减节点或改变 Atlas 计算与交互。
 
 0.1.2 的加载提示：首次布局显示当前范围的节点/关系总数、实际等待时间，
 区分“正在计算完整星图布局”和“正在初始化星图显示”。大图较慢时说明可继续等待，不显示虚构百分比。

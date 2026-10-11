@@ -29,6 +29,12 @@ inspectReviewPackage(verified);
 // just because render() returned or a guessed timeout elapsed.
 if (!verified.read("solid.js").toString().includes("data-physics-ready"))
   throw Error("Atlas readiness signal missing; review the plugin readiness adapter before upgrading");
+// Text visibility is scoped host CSS, not an Atlas runtime/physics modification.
+// Reject upgrades which remove the pinned text layers instead of silently failing.
+for (const layer of ["pixi-graph__labels", "pixi-graph__label", "pixi-graph__annotation"]) {
+  if (!verified.read("solid.js").toString().includes(layer))
+    throw Error("Atlas text layer missing; review the plugin title visibility adapter before upgrading");
+}
 // Check that bundling consumes exactly the independently verified package.
 for (const [name, digest] of Object.entries(verified.protection.files)) {
   if (

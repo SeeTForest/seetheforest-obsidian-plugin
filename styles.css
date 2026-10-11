@@ -262,6 +262,13 @@
   min-width: 0;
   min-height: 340px;
 }
+/* Atlas 0.1.7 text-layer compatibility contract. Preserve measured geometry;
+   never hide the canvas, Inspector, hover preview, or accessible note list. */
+.stf-atlas-host[data-show-titles="false"] .pixi-graph__labels,
+.stf-atlas-host[data-show-titles="false"] .pixi-graph__label,
+.stf-atlas-host[data-show-titles="false"] .pixi-graph__annotation {
+  visibility: hidden !important;
+}
 .stf-loading {
   position: absolute;
   z-index: 5;
